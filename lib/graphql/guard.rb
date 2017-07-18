@@ -13,22 +13,29 @@ module GraphQL
     end
 
     def instrument(type, field)
-      guard_proc = guard_proc(type, field)
-      return field unless guard_proc
-
+      return field unless guard_proc?(type, field)
       old_resolve_proc = field.resolve_proc
-      new_resolve_proc = ->(object, arguments, context) do
-        raise NotAuthorizedError.new("#{type}.#{field.name}") unless guard_proc.call(object, arguments, context)
-        old_resolve_proc.call(object, arguments, context)
-      end
+
+      new_resolve_proc =
+        if guard_proc = field.metadata[:guard]
+          ->(object, arguments, context) do
+            raise NotAuthorizedError.new("#{type}.#{field.name}") unless guard_proc.call(object, arguments, context)
+            old_resolve_proc.call(object, arguments, context)
+          end
+        elsif guard_proc = type.metadata[:guard]
+          ->(object, arguments, context) do
+            raise NotAuthorizedError.new("#{type}.#{field.name}") unless guard_proc.call(object, context)
+            old_resolve_proc.call(object, arguments, context)
+          end
+        end
 
       field.redefine { resolve(new_resolve_proc) }
     end
 
     private
 
-    def guard_proc(type, field)
-      field.metadata[:guard] || type.metadata[:guard]
+    def guard_proc?(type, field)
+      !!(field.metadata[:guard] || type.metadata[:guard])
     end
   end
 end
