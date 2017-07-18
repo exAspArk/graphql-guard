@@ -1,8 +1,79 @@
 # graphql-guard
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/graphql/guard`. To experiment with that code, run `bin/console` for an interactive prompt.
+[![Build Status](https://travis-ci.org/exAspArk/graphql-guard.svg?branch=master)](https://travis-ci.org/exAspArk/graphql-guard)
 
-TODO: Delete this and the text above, and describe your gem
+This tiny gem provides a field-level authorization for [graphql-ruby](https://github.com/rmosolgo/graphql-ruby).
+
+## Usage
+
+Define a GraphQL schema:
+
+```ruby
+# define type
+PostType = GraphQL::ObjectType.define do
+  name "Post"
+  field :id, !types.ID
+  field :title, !types.String
+end
+
+# define query
+QueryType = GraphQL::ObjectType.define do
+  name "Query"
+  field :posts, [PostType] do
+    argument :user_id, !types.ID
+    resolve ->(_obj, args, _ctx) { Post.find(args[:user_id]) }
+  end
+end
+
+# define schema
+Schema = GraphQL::Schema.define do
+  query QueryType
+end
+
+# execute query
+GraphSchema.execute(
+  query,
+  variables: { user_id: 1 },
+  context: { current_user: current_user }
+)
+```
+
+### Adding graphql-guard
+
+Add `GraphQL::Guard` to your schema:
+
+```ruby
+Schema = GraphQL::Schema.define do
+  query QueryType
+  use GraphQL::Guard.new # <========= HERE
+end
+```
+
+Now you can define `guard` for a field, which will check permissions before resolving the field:
+
+```ruby
+QueryType = GraphQL::ObjectType.define do
+  name "Query"
+  field :posts, [PostType] do
+    argument :user_id, !types.ID
+    guard ->(_obj, args, ctx) { args[:user_id] == ctx[:current_user].id } # <========= HERE
+    resolve ->(_obj, args, _ctx) { Post.find(args[:user_id]) }
+  end
+end
+```
+
+You can also define `guard` for each field in the type:
+
+```ruby
+PostType = GraphQL::ObjectType.define do
+  name "Post"
+  guard ->(post, ctx) { post.author?(ctx[:current_user]) || ctx[:current_user].admin? } # <========= HERE
+  field :id, !types.ID
+  field :title, !types.String
+end
+```
+
+If `guard` block returns `false`, then it'll raise a `GraphQL::Guard::NotAuthorizedError` error.
 
 ## Installation
 
@@ -19,10 +90,6 @@ And then execute:
 Or install it yourself as:
 
     $ gem install graphql-guard
-
-## Usage
-
-TODO: Write usage instructions here
 
 ## Development
 
