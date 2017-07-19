@@ -95,7 +95,7 @@ class GraphqlPolicy
 end
 ```
 
-Use pass this object to `GraphQL::Guard`:
+Pass this object to `GraphQL::Guard`:
 
 ```ruby
 Schema = GraphQL::Schema.define do
