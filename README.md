@@ -67,7 +67,7 @@ You can also define `guard`, which will be executed for all fields in the type:
 ```ruby
 PostType = GraphQL::ObjectType.define do
   name "Post"
-  guard ->(post, ctx) { ctx[:current_user].admin? } # <======= ʘ‿ʘ
+  guard ->(_post, ctx) { ctx[:current_user].admin? } # <======= ʘ‿ʘ
   ...
 end
 ```
@@ -76,7 +76,68 @@ If `guard` block returns `false`, then it'll raise a `GraphQL::Guard::NotAuthori
 
 ### Policy object
 
-TODO
+Alternatively, it's possible to describe all policies by using PORO (Plain Old Ruby Object), which should implement a `guard` method. For example:
+
+```ruby
+class GraphqlPolicy
+  RULES = {
+    QueryType => {
+      posts: ->(_obj, args, ctx) { args[:user_id] == ctx[:current_user].id }
+    },
+    PostType => {
+      '*': ->(post, ctx) { ctx[:current_user].admin? }
+    }
+  }
+
+  def self.guard(type, field)
+    RULES.dig(type, field)
+  end
+end
+```
+
+Use pass this object to `GraphQL::Guard`:
+
+```ruby
+Schema = GraphQL::Schema.define do
+  query QueryType
+  use GraphQL::Guard.new(policy_object: GraphqlPolicy) # <======= ʘ‿ʘ
+end
+```
+
+## Order of priority
+
+`GraphQL::Guard` will use the policy in the following order of priority:
+
+1. Inline policy on the field.
+2. Policy from the policy object on the field.
+3. Inline policy on the type.
+2. Policy from the policy object on the type.
+
+```ruby
+class GraphqlPolicy
+  RULES = {
+    PostType => {
+      title: ->(_post, ctx) { ctx[:current_user].admin? },                                # <======= 2
+      '*': ->(_post, ctx) { ctx[:current_user].admin? }                                   # <======= 4
+    }
+  }
+
+  def self.guard(type, field)
+    RULES.dig(type, field)
+  end
+end
+
+PostType = GraphQL::ObjectType.define do
+  name "Post"
+  guard ->(_post, ctx) { ctx[:current_user].admin? }                                      # <======= 3
+  field :title, !types.String, guard: ->(_post, _args, ctx) { ctx[:current_user].admin? } # <======= 1
+end
+
+Schema = GraphQL::Schema.define do
+  query QueryType
+  use GraphQL::Guard.new(policy_object: GraphqlPolicy)
+end
+```
 
 ## Installation
 
