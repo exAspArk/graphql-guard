@@ -21,4 +21,11 @@ module Inline
     query QueryType
     use GraphQL::Guard.new
   end
+
+  SchemaWithoutExceptions = GraphQL::Schema.define do
+    query QueryType
+    use GraphQL::Guard.new(not_authorized: ->(type, field) {
+      GraphQL::ExecutionError.new("Not authorized to access #{type}.#{field}")
+    })
+  end
 end

@@ -35,6 +35,20 @@ RSpec.describe GraphQL::Guard do
         Inline::Schema.execute(query, variables: {'user_id' => '1'}, context: {current_user: user})
       }.to raise_error(GraphQL::Guard::NotAuthorizedError, 'Post.id')
     end
+
+    it 'does not authorize a field and returns an error' do
+      user = User.new(id: '1', role: 'not_admin')
+      query = "query($user_id: ID!) { posts(user_id: $user_id) { id title } }"
+
+      result = Inline::SchemaWithoutExceptions.execute(query, variables: {'user_id' => '1'}, context: {current_user: user})
+
+      expect(result['errors']).to eq([{
+        "message" => "Not authorized to access Post.id",
+        "locations" => [{"line" => 1, "column" => 51}],
+        "path" => ["posts", 0, "id"]}
+      ])
+      expect(result['data']).to eq('posts' => [nil])
+    end
   end
 
   context 'policy object guard' do

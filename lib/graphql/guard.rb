@@ -9,13 +9,15 @@ GraphQL::Field.accepts_definitions(guard: GraphQL::Define.assign_metadata_key(:g
 module GraphQL
   class Guard
     ANY_FIELD_NAME = :'*'
+    DEFAULT_NOT_AUTHORIZED = ->(type, field) { raise NotAuthorizedError.new("#{type}.#{field}") }
 
     NotAuthorizedError = Class.new(StandardError)
 
-    attr_reader :policy_object
+    attr_reader :policy_object, :not_authorized
 
-    def initialize(policy_object: nil)
+    def initialize(policy_object: nil, not_authorized: DEFAULT_NOT_AUTHORIZED)
       @policy_object = policy_object
+      @not_authorized = not_authorized
     end
 
     def use(schema_definition)
@@ -35,9 +37,12 @@ module GraphQL
           elsif type_guard_proc
             type_guard_proc.call(object, context)
           end
-        raise NotAuthorizedError.new("#{type}.#{field.name}") unless authorized
 
-        old_resolve_proc.call(object, arguments, context)
+        if authorized
+          old_resolve_proc.call(object, arguments, context)
+        else
+          not_authorized.call(type, field.name.to_sym)
+        end
       end
 
       field.redefine { resolve(new_resolve_proc) }

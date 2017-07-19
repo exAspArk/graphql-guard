@@ -10,6 +10,7 @@ This tiny gem provides a field-level authorization for [graphql-ruby](https://gi
   * [Inline policies](#inline-policies)
   * [Policy object](#policy-object)
 * [Priority order](#priority-order)
+* [Error handling](#error-handling)
 * [Integration](#integration)
   * [CanCanCan](#cancancan)
   * [Pundit](#pundit)
@@ -148,6 +149,34 @@ Schema = GraphQL::Schema.define do
   query QueryType
   use GraphQL::Guard.new(policy_object: GraphqlPolicy)
 end
+```
+
+## Error handling
+
+By default `GraphQL::Guard` raises a `GraphQL::Guard::NotAuthorizedError` exception if access to field is not authorized.
+You can change this behavior, by passing custom `not_authorized` lambda. For example:
+
+```ruby
+SchemaWithoutExceptions = GraphQL::Schema.define do
+  query QueryType
+  use GraphQL::Guard.new(
+    # by default it raises an error
+    # not_authorized: ->(type, field) { raise GraphQL::Guard::NotAuthorizedError.new("#{type}.#{field}") }
+
+    # returns an error in the response
+    not_authorized: ->(type, field) { GraphQL::ExecutionError.new("Not authorized to access #{type}.#{field}") }
+  )
+end
+```
+
+In this case executing a query will continue, but return `nil` for not authorized field and also an array of `errors`:
+
+```ruby
+SchemaWithoutExceptions.execute("query { posts(user_id: 1) { id title } }")
+# => {
+# "data" => nil,
+# "errors" => [{ "messages" => "Not authorized to access Query.posts", "locations": { ... }, "path" => ["posts"] }]
+# }
 ```
 
 ## Integration
