@@ -19,9 +19,9 @@ end
 # define query
 QueryType = GraphQL::ObjectType.define do
   name "Query"
-  field :posts, [PostType] do
+  field :posts, !types[PostType] do
     argument :user_id, !types.ID
-    resolve ->(_obj, args, _ctx) { Post.find(args[:user_id]) }
+    resolve ->(_obj, args, _ctx) { Post.where(user_id: args[:user_id]) }
   end
 end
 
@@ -38,14 +38,14 @@ GraphSchema.execute(
 )
 ```
 
-### Adding graphql-guard
+### Inline policies
 
 Add `GraphQL::Guard` to your schema:
 
 ```ruby
 Schema = GraphQL::Schema.define do
   query QueryType
-  use GraphQL::Guard.new # <========= HERE
+  use GraphQL::Guard.new # <======= ʘ‿ʘ
 end
 ```
 
@@ -54,26 +54,29 @@ Now you can define `guard` for a field, which will check permissions before reso
 ```ruby
 QueryType = GraphQL::ObjectType.define do
   name "Query"
-  field :posts, [PostType] do
+  field :posts, !types[PostType] do
     argument :user_id, !types.ID
-    guard ->(_obj, args, ctx) { args[:user_id] == ctx[:current_user].id } # <========= HERE
-    resolve ->(_obj, args, _ctx) { Post.find(args[:user_id]) }
+    guard ->(_obj, args, ctx) { args[:user_id] == ctx[:current_user].id } # <======= ʘ‿ʘ
+    ...
   end
 end
 ```
 
-You can also define `guard` for each field in the type:
+You can also define `guard`, which will be executed for all fields in the type:
 
 ```ruby
 PostType = GraphQL::ObjectType.define do
   name "Post"
-  guard ->(post, ctx) { post.author?(ctx[:current_user]) || ctx[:current_user].admin? } # <========= HERE
-  field :id, !types.ID
-  field :title, !types.String
+  guard ->(post, ctx) { ctx[:current_user].admin? } # <======= ʘ‿ʘ
+  ...
 end
 ```
 
 If `guard` block returns `false`, then it'll raise a `GraphQL::Guard::NotAuthorizedError` error.
+
+### Policy object
+
+TODO
 
 ## Installation
 
