@@ -4,19 +4,34 @@
 
 This tiny gem provides a field-level authorization for [graphql-ruby](https://github.com/rmosolgo/graphql-ruby).
 
+## Contents
+
+* [Usage](#usage)
+  * [Inline policies](#inline-policies)
+  * [Policy object](#policy-object)
+* [Priority order](#priority-order)
+* [Integration](#integration)
+  * [CanCanCan](#cancancan)
+  * [Pundit](#pundit)
+* [Installation](#installation)
+* [Development](#development)
+* [Contributing](#contributing)
+* [License](#license)
+* [Code of Conduct](#code-of-conduct)
+
 ## Usage
 
 Define a GraphQL schema:
 
 ```ruby
-# define type
+# define a type
 PostType = GraphQL::ObjectType.define do
   name "Post"
   field :id, !types.ID
   field :title, !types.String
 end
 
-# define query
+# define a query
 QueryType = GraphQL::ObjectType.define do
   name "Query"
   field :posts, !types[PostType] do
@@ -25,17 +40,13 @@ QueryType = GraphQL::ObjectType.define do
   end
 end
 
-# define schema
+# define a schema
 Schema = GraphQL::Schema.define do
   query QueryType
 end
 
 # execute query
-GraphSchema.execute(
-  query,
-  variables: { user_id: 1 },
-  context: { current_user: current_user }
-)
+GraphSchema.execute(query, variables: { user_id: 1 }, context: { current_user: current_user })
 ```
 
 ### Inline policies
@@ -85,7 +96,7 @@ class GraphqlPolicy
       posts: ->(_obj, args, ctx) { args[:user_id] == ctx[:current_user].id }
     },
     PostType => {
-      '*': ->(post, ctx) { ctx[:current_user].admin? }
+      '*': ->(_post, ctx) { ctx[:current_user].admin? }
     }
   }
 
@@ -104,7 +115,7 @@ Schema = GraphQL::Schema.define do
 end
 ```
 
-## Order of priority
+## Priority order
 
 `GraphQL::Guard` will use the policy in the following order of priority:
 
@@ -136,6 +147,68 @@ end
 Schema = GraphQL::Schema.define do
   query QueryType
   use GraphQL::Guard.new(policy_object: GraphqlPolicy)
+end
+```
+
+## Integration
+
+You can simply reuse your existing policies if you really want. You don't need any monkey patches or magic for it ;)
+
+### CanCanCan
+
+```ruby
+# define an ability
+class Ability
+  include CanCan::Ability
+
+  def initialize(user)
+    user ||= User.new # guest user if not logged in
+    if user.admin?
+      can :manage, :all
+    else
+      can :read, Post, author_id: user.id
+    end
+  end
+end
+
+# use the ability in your guard policy object
+class GraphqlPolicy
+  RULES = {
+    PostType => {
+      '*': ->(post, ctx) { ctx[:current_ability].can?(:read, post) },
+    }
+  }
+
+  def self.guard(type, field)
+    RULES.dig(type, field)
+  end
+end
+
+# pass the ability
+GraphSchema.execute(query, context: { current_ability: Ability.new(current_user) })
+```
+
+### Pundit
+
+```ruby
+# define a policy
+class PostPolicy < ApplicationPolicy
+  def show?
+    user.admin? || record.author_id == user.id
+  end
+end
+
+# use the policy in your guard policy object
+class GraphqlPolicy
+  RULES = {
+    PostType => {
+      '*': ->(post, ctx) { PostPolicy.new(ctx[:current_user], post).show? },
+    }
+  }
+
+  def self.guard(type, field)
+    RULES.dig(type, field)
+  end
 end
 ```
 
