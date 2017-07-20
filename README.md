@@ -25,28 +25,30 @@ This tiny gem provides a field-level authorization for [graphql-ruby](https://gi
 Define a GraphQL schema:
 
 ```ruby
-# define a type
+# Define a type
 PostType = GraphQL::ObjectType.define do
   name "Post"
+
   field :id, !types.ID
   field :title, !types.String
 end
 
-# define a query
+# Define a query
 QueryType = GraphQL::ObjectType.define do
   name "Query"
+
   field :posts, !types[PostType] do
     argument :user_id, !types.ID
-    resolve ->(_obj, args, _ctx) { Post.where(user_id: args[:user_id]) }
+    resolve ->(_, args, _) { Post.where(user_id: args[:user_id]) }
   end
 end
 
-# define a schema
+# Define a schema
 Schema = GraphQL::Schema.define do
   query QueryType
 end
 
-# execute query
+# Execute query
 GraphSchema.execute(query, variables: { user_id: 1 }, context: { current_user: current_user })
 ```
 
@@ -54,67 +56,68 @@ GraphSchema.execute(query, variables: { user_id: 1 }, context: { current_user: c
 
 Add `GraphQL::Guard` to your schema:
 
-```ruby
+<pre>
 Schema = GraphQL::Schema.define do
   query QueryType
-  use GraphQL::Guard.new # <======= ʘ‿ʘ
+  <b>use GraphQL::Guard.new</b>
 end
-```
+</pre>
 
 Now you can define `guard` for a field, which will check permissions before resolving the field:
 
-```ruby
+<pre>
 QueryType = GraphQL::ObjectType.define do
   name "Query"
-  field :posts, !types[PostType] do
+
+  <b>field :posts</b>, !types[PostType] do
     argument :user_id, !types.ID
-    guard ->(_obj, args, ctx) { args[:user_id] == ctx[:current_user].id } # <======= ʘ‿ʘ
+    <b>guard ->(obj, args, ctx) {</b> args[:user_id] == ctx[:current_user].id <b>}</b>
     ...
   end
 end
-```
+</pre>
 
-You can also define `guard`, which will be executed for all fields in the type:
+You can also define `guard`, which will be executed for every (`*`) field in the type:
 
-```ruby
+<pre>
 PostType = GraphQL::ObjectType.define do
   name "Post"
-  guard ->(_post, ctx) { ctx[:current_user].admin? } # <======= ʘ‿ʘ
+  <b>guard ->(obj, ctx) {</b> ctx[:current_user].admin? <b>}</b>
   ...
 end
-```
+</pre>
 
-If `guard` block returns `false`, then it'll raise a `GraphQL::Guard::NotAuthorizedError` error.
+If `guard` block returns `nil` or `false`, then it'll raise a `GraphQL::Guard::NotAuthorizedError` error.
 
 ### Policy object
 
 Alternatively, it's possible to describe all policies by using PORO (Plain Old Ruby Object), which should implement a `guard` method. For example:
 
-```ruby
-class GraphqlPolicy
+<pre>
+class <b>GraphqlPolicy</b>
   RULES = {
     QueryType => {
-      posts: ->(_obj, args, ctx) { args[:user_id] == ctx[:current_user].id }
+      <b>posts: ->(obj, args, ctx) {</b> args[:user_id] == ctx[:current_user].id <b>}</b>
     },
     PostType => {
-      '*': ->(_post, ctx) { ctx[:current_user].admin? }
+      <b>'*': ->(obj, ctx) {</b> ctx[:current_user].admin? <b>}</b>
     }
   }
 
-  def self.guard(type, field)
+  def self.<b>guard(type, field)</b>
     RULES.dig(type, field)
   end
 end
-```
+</pre>
 
 Pass this object to `GraphQL::Guard`:
 
-```ruby
+<pre>
 Schema = GraphQL::Schema.define do
   query QueryType
-  use GraphQL::Guard.new(policy_object: GraphqlPolicy) # <======= ʘ‿ʘ
+  use GraphQL::Guard.new(<b>policy_object: GraphqlPolicy</b>)
 end
-```
+</pre>
 
 ## Priority order
 
@@ -125,12 +128,12 @@ end
 3. Inline policy on the type.
 2. Policy from the policy object on the type.
 
-```ruby
-class GraphqlPolicy
+<pre>
+class <b>GraphqlPolicy</b>
   RULES = {
     PostType => {
-      title: ->(_post, ctx) { ctx[:current_user].admin? },                                # <======= 2
-      '*': ->(_post, ctx) { ctx[:current_user].admin? }                                   # <======= 4
+      <b>'*': ->(_, ctx) {</b> ctx[:current_user].admin? <b>}</b>,                               # <=== <b>4</b>
+      <b>title: ->(_, _, ctx) {</b> ctx[:current_user].admin? <b>}</b>                           # <=== <b>2</b>
     }
   }
 
@@ -141,43 +144,43 @@ end
 
 PostType = GraphQL::ObjectType.define do
   name "Post"
-  guard ->(_post, ctx) { ctx[:current_user].admin? }                                      # <======= 3
-  field :title, !types.String, guard: ->(_post, _args, ctx) { ctx[:current_user].admin? } # <======= 1
+  <b>guard ->(_, ctx) {</b> ctx[:current_user].admin? <b>}</b>                                  # <=== <b>3</b>
+  <b>field :title</b>, !types.String, <b>guard: ->(_, _, ctx) {</b> ctx[:current_user].admin? <b>}</b> # <=== <b>1</b>
 end
 
 Schema = GraphQL::Schema.define do
   query QueryType
-  use GraphQL::Guard.new(policy_object: GraphqlPolicy)
+  use GraphQL::Guard.new(<b>policy_object: GraphqlPolicy</b>)
 end
-```
+</pre>
 
 ## Error handling
 
 By default `GraphQL::Guard` raises a `GraphQL::Guard::NotAuthorizedError` exception if access to field is not authorized.
 You can change this behavior, by passing custom `not_authorized` lambda. For example:
 
-```ruby
-SchemaWithoutExceptions = GraphQL::Schema.define do
+<pre>
+SchemaWithErrors = GraphQL::Schema.define do
   query QueryType
   use GraphQL::Guard.new(
-    # by default it raises an error
-    # not_authorized: ->(type, field) { raise GraphQL::Guard::NotAuthorizedError.new("#{type}.#{field}") }
+    # Returns an error in the response
+    <b>not_authorized: ->(type, field) { GraphQL::ExecutionError.new("Not authorized to access #{type}.#{field}") }</b>
 
-    # returns an error in the response
-    not_authorized: ->(type, field) { GraphQL::ExecutionError.new("Not authorized to access #{type}.#{field}") }
+    # By default it raises an error
+    # not_authorized: ->(type, field) { raise GraphQL::Guard::NotAuthorizedError.new("#{type}.#{field}") }
   )
 end
-```
+</pre>
 
 In this case executing a query will continue, but return `nil` for not authorized field and also an array of `errors`:
 
-```ruby
-SchemaWithoutExceptions.execute("query { posts(user_id: 1) { id title } }")
+<pre>
+SchemaWithErrors.execute("query { <b>posts</b>(user_id: 1) { id title } }")
 # => {
-# "data" => nil,
-# "errors" => [{ "messages" => "Not authorized to access Query.posts", "locations": { ... }, "path" => ["posts"] }]
+#   "data" => <b>nil</b>,
+#   "errors" => [{ "messages" => <b>"Not authorized to access Query.posts"</b>, "locations": { ... }, "path" => [<b>"posts"</b>] }]
 # }
-```
+</pre>
 
 ## Integration
 
@@ -185,13 +188,13 @@ You can simply reuse your existing policies if you really want. You don't need a
 
 ### CanCanCan
 
-```ruby
-# define an ability
-class Ability
+<pre>
+# Define an ability
+class <b>Ability</b>
   include CanCan::Ability
 
   def initialize(user)
-    user ||= User.new # guest user if not logged in
+    user ||= User.new
     if user.admin?
       can :manage, :all
     else
@@ -200,46 +203,37 @@ class Ability
   end
 end
 
-# use the ability in your guard policy object
-class GraphqlPolicy
-  RULES = {
-    PostType => {
-      '*': ->(post, ctx) { ctx[:current_ability].can?(:read, post) },
-    }
-  }
-
-  def self.guard(type, field)
-    RULES.dig(type, field)
-  end
+# Use the ability in your guard
+PostType = GraphQL::ObjectType.define do
+  name "Post"
+  <b>guard ->(post, ctx) { ctx[:current_ability].can?(:read, post) }</b>
+  ...
 end
 
-# pass the ability
-GraphSchema.execute(query, context: { current_ability: Ability.new(current_user) })
-```
+# Pass the ability
+GraphSchema.execute(query, context: { <b>current_ability: Ability.new(current_user)</b> })
+</pre>
 
 ### Pundit
 
-```ruby
-# define a policy
-class PostPolicy < ApplicationPolicy
+<pre>
+# Define a policy
+class <b>PostPolicy</b> < ApplicationPolicy
   def show?
     user.admin? || record.author_id == user.id
   end
 end
 
-# use the policy in your guard policy object
-class GraphqlPolicy
-  RULES = {
-    PostType => {
-      '*': ->(post, ctx) { PostPolicy.new(ctx[:current_user], post).show? },
-    }
-  }
-
-  def self.guard(type, field)
-    RULES.dig(type, field)
-  end
+# Use the ability in your guard
+PostType = GraphQL::ObjectType.define do
+  name "Post"
+  <b>guard ->(post, ctx) { PostPolicy.new(ctx[:current_user], post).show? }</b>
+  ...
 end
-```
+
+# Pass current_user
+GraphSchema.execute(query, context: { <b>current_user: current_user</b> })
+</pre>
 
 ## Installation
 
