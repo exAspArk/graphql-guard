@@ -1,6 +1,7 @@
 # graphql-guard
 
 [![Build Status](https://travis-ci.org/exAspArk/graphql-guard.svg?branch=master)](https://travis-ci.org/exAspArk/graphql-guard)
+[![Downloads](https://img.shields.io/gem/dt/graphql-guard.svg)](https://rubygems.org/gems/graphql-guard)
 
 This tiny gem provides a field-level authorization for [graphql-ruby](https://github.com/rmosolgo/graphql-ruby).
 
