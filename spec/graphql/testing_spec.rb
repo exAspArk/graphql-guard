@@ -1,0 +1,91 @@
+# frozen_string_literal: true
+
+require "spec_helper"
+
+require 'fixtures/user'
+require 'fixtures/post'
+require 'fixtures/inline_schema'
+require 'fixtures/policy_object_schema'
+
+require "graphql/guard/testing"
+
+RSpec.describe GraphQL::Guard do
+  context 'inline guard' do
+    it 'returns true for an authorized field' do
+      posts_field = Inline::QueryType.field_with_guard('posts')
+      user = User.new(id: '1', role: 'admin')
+
+      result = posts_field.guard(nil, {user_id: user.id}, {current_user: user})
+
+      expect(result).to eq(true)
+    end
+
+    it 'returns false for a not authorized field' do
+      posts_field = Inline::QueryType.field_with_guard('posts')
+      user = User.new(id: '1', role: 'admin')
+
+      result = posts_field.guard(nil, {user_id: '2'}, {current_user: user})
+
+      expect(result).to eq(false)
+    end
+
+    it 'returns false for a field with a policy on the type' do
+      posts_field = Inline::PostType.field_with_guard('id')
+      user = User.new(id: '1', role: 'not_admin')
+
+      result = posts_field.guard(nil, {current_user: user})
+
+      expect(result).to eq(false)
+    end
+  end
+
+  context 'policy object guard' do
+    it 'returns true for an authorized field' do
+      guard_object = GraphQL::Guard.new(policy_object: PolicyObject::GraphqlPolicy)
+      posts_field = PolicyObject::QueryType.field_with_guard('posts', guard_object)
+      user = User.new(id: '1', role: 'admin')
+
+      result = posts_field.guard(nil, {user_id: user.id}, {current_user: user})
+
+      expect(result).to eq(true)
+    end
+
+    it 'raises an error if the field is without guard' do
+      posts_field = PolicyObject::QueryType.field_with_guard('posts')
+      user = User.new(id: '1', role: 'admin')
+
+      expect {
+        posts_field.guard(nil, {user_id: user.id}, {current_user: user})
+      }.to raise_error(GraphQL::Field::NoGuardError, "Guard lambda does not exist for Query.posts")
+    end
+
+    it 'raises an error if the field was fetched without guard' do
+      posts_field = PolicyObject::QueryType.get_field('posts')
+      user = User.new(id: '1', role: 'admin')
+
+      expect {
+        posts_field.guard(nil, {user_id: user.id}, {current_user: user})
+      }.to raise_error(GraphQL::Field::NoGuardError, "Get your field by calling: Type.field_with_guard('posts')")
+    end
+
+    it 'returns false for a not authorized field' do
+      guard_object = GraphQL::Guard.new(policy_object: PolicyObject::GraphqlPolicy)
+      posts_field = PolicyObject::QueryType.field_with_guard('posts', guard_object)
+      user = User.new(id: '1', role: 'admin')
+
+      result = posts_field.guard(nil, {user_id: '2'}, {current_user: user})
+
+      expect(result).to eq(false)
+    end
+
+    it 'returns false for a field with a policy on the type' do
+      guard_object = GraphQL::Guard.new(policy_object: PolicyObject::GraphqlPolicy)
+      posts_field = PolicyObject::PostType.field_with_guard('id', guard_object)
+      user = User.new(id: '1', role: 'not_admin')
+
+      result = posts_field.guard(nil, {current_user: user})
+
+      expect(result).to eq(false)
+    end
+  end
+end

@@ -25,8 +25,8 @@ module GraphQL
     end
 
     def instrument(type, field)
-      field_guard_proc = inline_field_guard(field) || policy_object_guard(type, field.name.to_sym)
-      type_guard_proc = inline_type_guard(type) || policy_object_guard(type, ANY_FIELD_NAME)
+      field_guard_proc = field_guard_proc(type, field)
+      type_guard_proc = type_guard_proc(type, field)
       return field if !field_guard_proc && !type_guard_proc
 
       old_resolve_proc = field.resolve_proc
@@ -46,6 +46,14 @@ module GraphQL
       end
 
       field.redefine { resolve(new_resolve_proc) }
+    end
+
+    def field_guard_proc(type, field)
+      inline_field_guard(field) || policy_object_guard(type, field.name.to_sym)
+    end
+
+    def type_guard_proc(type, field)
+      inline_type_guard(type) || policy_object_guard(type, ANY_FIELD_NAME)
     end
 
     private

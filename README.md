@@ -19,6 +19,7 @@ This tiny gem provides a field-level authorization for [graphql-ruby](https://gi
   * [CanCanCan](#cancancan)
   * [Pundit](#pundit)
 * [Installation](#installation)
+* [Testing](#testing)
 * [Development](#development)
 * [Contributing](#contributing)
 * [License](#license)
@@ -95,7 +96,7 @@ If `guard` block returns `nil` or `false`, then it'll raise a `GraphQL::Guard::N
 
 ### Policy object
 
-Alternatively, it's possible to describe all policies by using PORO (Plain Old Ruby Object), which should implement a `guard` method. For example:
+Alternatively, it's possible to extract and describe all policies by using PORO (Plain Old Ruby Object), which should implement a `guard` method. For example:
 
 <pre>
 class <b>GraphqlPolicy</b>
@@ -254,6 +255,52 @@ And then execute:
 Or install it yourself as:
 
     $ gem install graphql-guard
+
+## Testing
+
+It's possible to test fields with `guard` in isolation:
+
+<pre>
+# Your type
+QueryType = GraphQL::ObjectType.define do
+  name "Query"
+  <b>field :posts</b>, !types[PostType], <b>guard ->(obj, args, ctx) {</b> ... <b>}</b>
+end
+
+# Your test
+<b>require "graphql/guard/testing"</b>
+
+posts = QueryType.<b>field_with_guard('posts')</b>
+result = posts.<b>guard(obj, args, ctx)</b>
+expect(result).to eq(true)
+</pre>
+
+If you would like to test your fields with policy objects:
+
+
+<pre>
+# Your type
+QueryType = GraphQL::ObjectType.define do
+  name "Query"
+  <b>field :posts</b>, !types[PostType]
+end
+
+# Your policy object
+class <b>GraphqlPolicy</b>
+  def self.<b>guard</b>(type, field)
+    <b>->(_obj, args, ctx) {</b> ... <b>}</b>
+  end
+end
+
+# Your test
+<b>require "graphql/guard/testing"</b>
+
+<b>guard_object</b> = <b>GraphQL::Guard.new(policy_object: PolicyObject::GraphqlPolicy)</b>
+
+posts = QueryType.<b>field_with_guard('posts', guard_object)</b>
+result = posts.<b>guard(obj, args, ctx)</b>
+expect(result).to eq(true)
+</pre>
 
 ## Development
 
