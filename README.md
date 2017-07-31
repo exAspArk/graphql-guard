@@ -6,7 +6,7 @@
 [![Downloads](https://img.shields.io/gem/dt/graphql-guard.svg)](https://rubygems.org/gems/graphql-guard)
 [![Latest Version](https://img.shields.io/gem/v/graphql-guard.svg)](https://rubygems.org/gems/graphql-guard)
 
-This tiny gem provides a field-level authorization for [graphql-ruby](https://github.com/rmosolgo/graphql-ruby).
+This gem provides a field-level authorization for [graphql-ruby](https://github.com/rmosolgo/graphql-ruby).
 
 ## Contents
 
@@ -44,7 +44,7 @@ QueryType = GraphQL::ObjectType.define do
 
   field :posts, !types[PostType] do
     argument :user_id, !types.ID
-    resolve ->(_, args, _) { Post.where(user_id: args[:user_id]) }
+    resolve ->(obj, args, ctx) { Post.where(user_id: args[:user_id]) }
   end
 end
 
@@ -82,12 +82,12 @@ QueryType = GraphQL::ObjectType.define do
 end
 </pre>
 
-You can also define `guard`, which will be executed for every (`*`) field in the type:
+You can also define `guard`, which will be executed for every `*` field in the type:
 
 <pre>
 PostType = GraphQL::ObjectType.define do
   name "Post"
-  <b>guard ->(obj, ctx) {</b> ctx[:current_user].admin? <b>}</b>
+  <b>guard ->(obj, args, ctx) {</b> ctx[:current_user].admin? <b>}</b>
   ...
 end
 </pre>
@@ -105,7 +105,7 @@ class <b>GraphqlPolicy</b>
       <b>posts: ->(obj, args, ctx) {</b> args[:user_id] == ctx[:current_user].id <b>}</b>
     },
     PostType => {
-      <b>'*': ->(obj, ctx) {</b> ctx[:current_user].admin? <b>}</b>
+      <b>'*': ->(obj, args, ctx) {</b> ctx[:current_user].admin? <b>}</b>
     }
   }
 
@@ -137,8 +137,8 @@ end
 class <b>GraphqlPolicy</b>
   RULES = {
     PostType => {
-      <b>'*': ->(_, ctx) {</b> ctx[:current_user].admin? <b>}</b>,                               # <=== <b>4</b>
-      <b>title: ->(_, _, ctx) {</b> ctx[:current_user].admin? <b>}</b>                           # <=== <b>2</b>
+      <b>'*': ->(obj, args, ctx) {</b> ctx[:current_user].admin? <b>}</b>,                           # <=== <b>4</b>
+      <b>title: ->(obj, args, ctx) {</b> ctx[:current_user].admin? <b>}</b>                          # <=== <b>2</b>
     }
   }
 
@@ -149,8 +149,8 @@ end
 
 PostType = GraphQL::ObjectType.define do
   name "Post"
-  <b>guard ->(_, ctx) {</b> ctx[:current_user].admin? <b>}</b>                                  # <=== <b>3</b>
-  <b>field :title</b>, !types.String, <b>guard: ->(_, _, ctx) {</b> ctx[:current_user].admin? <b>}</b> # <=== <b>1</b>
+  <b>guard ->(obj, args, ctx) {</b> ctx[:current_user].admin? <b>}</b>                               # <=== <b>3</b>
+  <b>field :title</b>, !types.String, <b>guard: ->(obj, args, ctx) {</b> ctx[:current_user].admin? <b>}</b> # <=== <b>1</b>
 end
 
 Schema = GraphQL::Schema.define do
@@ -211,7 +211,7 @@ end
 # Use the ability in your guard
 PostType = GraphQL::ObjectType.define do
   name "Post"
-  <b>guard ->(post, ctx) { ctx[:current_ability].can?(:read, post) }</b>
+  <b>guard ->(post, args, ctx) { ctx[:current_ability].can?(:read, post) }</b>
   ...
 end
 
@@ -232,7 +232,7 @@ end
 # Use the ability in your guard
 PostType = GraphQL::ObjectType.define do
   name "Post"
-  <b>guard ->(post, ctx) { PostPolicy.new(ctx[:current_user], post).show? }</b>
+  <b>guard ->(post, args, ctx) { PostPolicy.new(ctx[:current_user], post).show? }</b>
   ...
 end
 
@@ -288,16 +288,14 @@ end
 # Your policy object
 class <b>GraphqlPolicy</b>
   def self.<b>guard</b>(type, field)
-    <b>->(_obj, args, ctx) {</b> ... <b>}</b>
+    <b>->(obj, args, ctx) {</b> ... <b>}</b>
   end
 end
 
 # Your test
 <b>require "graphql/guard/testing"</b>
 
-<b>guard_object</b> = <b>GraphQL::Guard.new(policy_object: PolicyObject::GraphqlPolicy)</b>
-
-posts = QueryType.<b>field_with_guard('posts', guard_object)</b>
+posts = QueryType.<b>field_with_guard('posts', GraphqlPolicy)</b>
 result = posts.<b>guard(obj, args, ctx)</b>
 expect(result).to eq(true)
 </pre>

@@ -21,7 +21,7 @@ module PolicyObject
         posts: ->(_obj, args, ctx) { args[:user_id] == ctx[:current_user].id }
       },
       PostType => {
-        '*': ->(_post, ctx) { ctx[:current_user].admin? }
+        '*': ->(_post, args, ctx) { ctx[:current_user].admin? }
       }
     }
 

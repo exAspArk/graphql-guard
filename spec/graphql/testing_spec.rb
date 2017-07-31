@@ -33,7 +33,7 @@ RSpec.describe GraphQL::Guard do
       posts_field = Inline::PostType.field_with_guard('id')
       user = User.new(id: '1', role: 'not_admin')
 
-      result = posts_field.guard(nil, {current_user: user})
+      result = posts_field.guard(nil, nil, {current_user: user})
 
       expect(result).to eq(false)
     end
@@ -41,8 +41,7 @@ RSpec.describe GraphQL::Guard do
 
   context 'policy object guard' do
     it 'returns true for an authorized field' do
-      guard_object = GraphQL::Guard.new(policy_object: PolicyObject::GraphqlPolicy)
-      posts_field = PolicyObject::QueryType.field_with_guard('posts', guard_object)
+      posts_field = PolicyObject::QueryType.field_with_guard('posts', PolicyObject::GraphqlPolicy)
       user = User.new(id: '1', role: 'admin')
 
       result = posts_field.guard(nil, {user_id: user.id}, {current_user: user})
@@ -69,8 +68,7 @@ RSpec.describe GraphQL::Guard do
     end
 
     it 'returns false for a not authorized field' do
-      guard_object = GraphQL::Guard.new(policy_object: PolicyObject::GraphqlPolicy)
-      posts_field = PolicyObject::QueryType.field_with_guard('posts', guard_object)
+      posts_field = PolicyObject::QueryType.field_with_guard('posts', PolicyObject::GraphqlPolicy)
       user = User.new(id: '1', role: 'admin')
 
       result = posts_field.guard(nil, {user_id: '2'}, {current_user: user})
@@ -79,11 +77,10 @@ RSpec.describe GraphQL::Guard do
     end
 
     it 'returns false for a field with a policy on the type' do
-      guard_object = GraphQL::Guard.new(policy_object: PolicyObject::GraphqlPolicy)
-      posts_field = PolicyObject::PostType.field_with_guard('id', guard_object)
+      posts_field = PolicyObject::PostType.field_with_guard('id', PolicyObject::GraphqlPolicy)
       user = User.new(id: '1', role: 'not_admin')
 
-      result = posts_field.guard(nil, {current_user: user})
+      result = posts_field.guard(nil, nil, {current_user: user})
 
       expect(result).to eq(false)
     end

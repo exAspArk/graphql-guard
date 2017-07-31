@@ -25,18 +25,12 @@ module GraphQL
     end
 
     def instrument(type, field)
-      field_guard_proc = field_guard_proc(type, field)
-      type_guard_proc = type_guard_proc(type, field)
-      return field if !field_guard_proc && !type_guard_proc
+      guard_proc = guard_proc(type, field)
+      return field unless guard_proc
 
       old_resolve_proc = field.resolve_proc
       new_resolve_proc = ->(object, arguments, context) do
-        authorized =
-          if field_guard_proc
-            field_guard_proc.call(object, arguments, context)
-          elsif type_guard_proc
-            type_guard_proc.call(object, context)
-          end
+        authorized = guard_proc.call(object, arguments, context)
 
         if authorized
           old_resolve_proc.call(object, arguments, context)
@@ -48,12 +42,11 @@ module GraphQL
       field.redefine { resolve(new_resolve_proc) }
     end
 
-    def field_guard_proc(type, field)
-      inline_field_guard(field) || policy_object_guard(type, field.name.to_sym)
-    end
-
-    def type_guard_proc(type, field)
-      inline_type_guard(type) || policy_object_guard(type, ANY_FIELD_NAME)
+    def guard_proc(type, field)
+      inline_field_guard(field) ||
+        policy_object_guard(type, field.name.to_sym) ||
+        inline_type_guard(type) ||
+        policy_object_guard(type, ANY_FIELD_NAME)
     end
 
     private

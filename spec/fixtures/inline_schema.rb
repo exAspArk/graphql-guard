@@ -3,7 +3,7 @@
 module Inline
   PostType = GraphQL::ObjectType.define do
     name "Post"
-    guard ->(post, ctx) { ctx[:current_user].admin? }
+    guard ->(_post, _args, ctx) { ctx[:current_user].admin? }
     field :id, !types.ID
     field :title, !types.String
   end
