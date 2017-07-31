@@ -8,9 +8,48 @@ one of the following labels: `Added`, `Changed`, `Deprecated`,
 to manage the versions of this gem so
 that you can set version constraints properly.
 
-#### [Unreleased](https://github.com/exAspArk/graphql-guard/compare/v0.4.0...HEAD)
+#### [Unreleased](https://github.com/exAspArk/graphql-guard/compare/v1.0.0...HEAD)
 
 * WIP
+
+#### [v1.0.0](https://github.com/exAspArk/graphql-guard/compare/v0.4.0...v1.0.0) – 2017-07-31
+
+* `Changed`: guards for every `*` field also accepts arguments: `->(object, arguments, context) { ... }`:
+
+Before:
+
+<pre>
+GraphQL::ObjectType.define do
+  name "Post"
+  guard ->(obj, ctx) { ... }
+  ...
+end
+</pre>
+
+After:
+
+<pre>
+GraphQL::ObjectType.define do
+  name "Post"
+  guard ->(obj, <b>args</b>, ctx) { ... }
+  ...
+end
+</pre>
+
+* `Changed`: `.field_with_guard` from `graphql/guard/testing` module accepts policy object as a second argument:
+
+Before:
+
+<pre>
+<b>guard_object</b> = GraphQL::Guard.new(policy_object: GraphqlPolicy)
+posts_field = QueryType.field_with_guard('posts', <b>guard_object</b>)
+</pre>
+
+After:
+
+<pre>
+posts_field = QueryType.field_with_guard('posts', <b>GraphqlPolicy</b>)
+</pre>
 
 #### [v0.4.0](https://github.com/exAspArk/graphql-guard/compare/v0.3.0...v0.4.0) – 2017-07-25
 
