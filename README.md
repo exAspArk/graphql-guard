@@ -54,7 +54,7 @@ Schema = GraphQL::Schema.define do
 end
 
 # Execute query
-GraphSchema.execute(query, variables: { user_id: 1 }, context: { current_user: current_user })
+Schema.execute(query, variables: { user_id: 1 }, context: { current_user: current_user })
 ```
 
 ### Inline policies
@@ -216,7 +216,7 @@ PostType = GraphQL::ObjectType.define do
 end
 
 # Pass the ability
-GraphSchema.execute(query, context: { <b>current_ability: Ability.new(current_user)</b> })
+Schema.execute(query, context: { <b>current_ability: Ability.new(current_user)</b> })
 </pre>
 
 ### Pundit
@@ -237,7 +237,7 @@ PostType = GraphQL::ObjectType.define do
 end
 
 # Pass current_user
-GraphSchema.execute(query, context: { <b>current_user: current_user</b> })
+Schema.execute(query, context: { <b>current_user: current_user</b> })
 </pre>
 
 ## Installation
