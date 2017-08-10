@@ -25,6 +25,10 @@ This gem provides a field-level authorization for [graphql-ruby](https://github.
 * [License](#license)
 * [Code of Conduct](#code-of-conduct)
 
+<a href="https://www.universe.com/" target="_blank" rel="noopener noreferrer">
+  <img src="images/universe.png" height="41" width="153" alt="Sponsored by Universe" style="max-width:100%;">
+</a>
+
 ## Usage
 
 Define a GraphQL schema:
