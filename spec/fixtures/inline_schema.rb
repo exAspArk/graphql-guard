@@ -10,7 +10,7 @@ module Inline
 
   QueryType = GraphQL::ObjectType.define do
     name "Query"
-    field :posts, !types[PostType] do
+    field :posts, !types[!PostType] do
       argument :user_id, !types.ID
       guard ->(_obj, args, ctx) { args[:user_id] == ctx[:current_user].id }
       resolve ->(_obj, args, _ctx) { Post.where(user_id: args[:user_id]) }

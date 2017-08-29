@@ -46,7 +46,7 @@ end
 QueryType = GraphQL::ObjectType.define do
   name "Query"
 
-  field :posts, !types[PostType] do
+  field :posts, !types[!PostType] do
     argument :user_id, !types.ID
     resolve ->(obj, args, ctx) { Post.where(user_id: args[:user_id]) }
   end
@@ -78,7 +78,7 @@ Now you can define `guard` for a field, which will check permissions before reso
 QueryType = GraphQL::ObjectType.define do
   name "Query"
 
-  <b>field :posts</b>, !types[PostType] do
+  <b>field :posts</b>, !types[!PostType] do
     argument :user_id, !types.ID
     <b>guard ->(obj, args, ctx) {</b> args[:user_id] == ctx[:current_user].id <b>}</b>
     ...
@@ -215,7 +215,7 @@ end
 # Use the ability in your guard
 PostType = GraphQL::ObjectType.define do
   name "Post"
-  <b>guard ->(post, args, ctx) { ctx[:current_ability].can?(:read, post) }</b>
+  guard ->(post, args, ctx) { <b>ctx[:current_ability].can?(:read, post)</b> }
   ...
 end
 
@@ -236,7 +236,7 @@ end
 # Use the ability in your guard
 PostType = GraphQL::ObjectType.define do
   name "Post"
-  <b>guard ->(post, args, ctx) { PostPolicy.new(ctx[:current_user], post).show? }</b>
+  guard ->(post, args, ctx) { <b>PostPolicy.new(ctx[:current_user], post).show?</b> }
   ...
 end
 
@@ -268,7 +268,7 @@ It's possible to test fields with `guard` in isolation:
 # Your type
 QueryType = GraphQL::ObjectType.define do
   name "Query"
-  <b>field :posts</b>, !types[PostType], <b>guard ->(obj, args, ctx) {</b> ... <b>}</b>
+  <b>field :posts</b>, !types[!PostType], <b>guard ->(obj, args, ctx) {</b> ... <b>}</b>
 end
 
 # Your test
@@ -286,7 +286,7 @@ If you would like to test your fields with policy objects:
 # Your type
 QueryType = GraphQL::ObjectType.define do
   name "Query"
-  <b>field :posts</b>, !types[PostType]
+  <b>field :posts</b>, !types[!PostType]
 end
 
 # Your policy object

@@ -47,7 +47,7 @@ RSpec.describe GraphQL::Guard do
         "locations" => [{"line" => 1, "column" => 51}],
         "path" => ["posts", 0, "id"]}
       ])
-      expect(result['data']).to eq('posts' => [nil])
+      expect(result['data']).to eq(nil)
     end
   end
 
