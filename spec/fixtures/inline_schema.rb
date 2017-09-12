@@ -5,7 +5,7 @@ module Inline
     name "Post"
     guard ->(_post, _args, ctx) { ctx[:current_user].admin? }
     field :id, !types.ID
-    field :title, !types.String
+    field :title, types.String
   end
 
   QueryType = GraphQL::ObjectType.define do

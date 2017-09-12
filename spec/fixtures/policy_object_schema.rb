@@ -4,7 +4,7 @@ module PolicyObject
   PostType = GraphQL::ObjectType.define do
     name "Post"
     field :id, !types.ID
-    field :title, !types.String
+    field :title, types.String
   end
 
   QueryType = GraphQL::ObjectType.define do

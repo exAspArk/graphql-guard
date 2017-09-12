@@ -14,10 +14,10 @@ This gem provides a field-level authorization for [graphql-ruby](https://github.
   * [Inline policies](#inline-policies)
   * [Policy object](#policy-object)
 * [Priority order](#priority-order)
-* [Error handling](#error-handling)
 * [Integration](#integration)
   * [CanCanCan](#cancancan)
   * [Pundit](#pundit)
+* [Error handling](#error-handling)
 * [Installation](#installation)
 * [Testing](#testing)
 * [Development](#development)
@@ -39,7 +39,7 @@ PostType = GraphQL::ObjectType.define do
   name "Post"
 
   field :id, !types.ID
-  field :title, !types.String
+  field :title, types.String
 end
 
 # Define a query
@@ -163,34 +163,6 @@ Schema = GraphQL::Schema.define do
 end
 </pre>
 
-## Error handling
-
-By default `GraphQL::Guard` raises a `GraphQL::Guard::NotAuthorizedError` exception if access to field is not authorized.
-You can change this behavior, by passing custom `not_authorized` lambda. For example:
-
-<pre>
-SchemaWithErrors = GraphQL::Schema.define do
-  query QueryType
-  use GraphQL::Guard.new(
-    # Returns an error in the response
-    <b>not_authorized: ->(type, field) { GraphQL::ExecutionError.new("Not authorized to access #{type}.#{field}") }</b>
-
-    # By default it raises an error
-    # not_authorized: ->(type, field) { raise GraphQL::Guard::NotAuthorizedError.new("#{type}.#{field}") }
-  )
-end
-</pre>
-
-In this case executing a query will continue, but return `nil` for not authorized field and also an array of `errors`:
-
-<pre>
-SchemaWithErrors.execute("query { <b>posts</b>(user_id: 1) { id title } }")
-# => {
-#   "data" => <b>nil</b>,
-#   "errors" => [{ "messages" => <b>"Not authorized to access Query.posts"</b>, "locations": { ... }, "path" => [<b>"posts"</b>] }]
-# }
-</pre>
-
 ## Integration
 
 You can simply reuse your existing policies if you really want. You don't need any monkey patches or magic for it ;)
@@ -242,6 +214,78 @@ end
 
 # Pass current_user
 Schema.execute(query, context: { <b>current_user: current_user</b> })
+</pre>
+
+## Error handling
+
+By default `GraphQL::Guard` raises a `GraphQL::Guard::NotAuthorizedError` exception if access to the field is not authorized.
+You can change this behavior, by passing custom `not_authorized` lambda. For example:
+
+<pre>
+SchemaWithErrors = GraphQL::Schema.define do
+  query QueryType
+  use GraphQL::Guard.new(
+    # By default it raises an error
+    # not_authorized: ->(type, field) { raise GraphQL::Guard::NotAuthorizedError.new("#{type}.#{field}") }
+
+    # Returns an error in the response
+    <b>not_authorized: ->(type, field) { GraphQL::ExecutionError.new("Not authorized to access #{type}.#{field}") }</b>
+  )
+end
+</pre>
+
+In this case executing a query will continue, but return `nil` for not authorized field and also an array of `errors`:
+
+<pre>
+SchemaWithErrors.execute("query { <b>posts</b>(user_id: 1) { id title } }")
+# => {
+#   "data" => <b>nil</b>,
+#   "errors" => [{
+#     "messages" => <b>"Not authorized to access Query.posts"</b>,
+#     "locations": { "line" => 1, "column" => 9 },
+#     "path" => [<b>"posts"</b>]
+#   }]
+# }
+</pre>
+
+In more advanced cases, you may want not to return `errors` only for some unauthorized fields. Simply return `nil` if user is not authorized to access the field. You can achieve it, for example, by placing the logic into your `PolicyObject`:
+
+<pre>
+class <b>GraphqlPolicy</b>
+  RULES = {
+    PostType => {
+      '*': {
+        guard: ->(obj, args, ctx) { ... },
+        <b>not_authorized:</b> ->(type, field) { GraphQL::ExecutionError.new("Not authorized to access #{type}.#{field}") }
+      }
+      title: {
+        guard: ->(obj, args, ctx) { ... },
+        <b>not_authorized:</b> ->(type, field) { nil } # simply return nil if not authorized, no errors
+      }
+    }
+  }
+
+  def self.guard(type, field)
+    RULES.dig(type, field, :guard)
+  end
+
+  def self.<b>not_authorized_handler</b>(type, field)
+    RULES</b>.dig(type, field, <b>:not_authorized</b>) || RULES</b>.dig(type, :'*', <b>:not_authorized</b>)
+  end
+end
+
+Schema = GraphQL::Schema.define do
+  query QueryType
+  mutation MutationType
+
+  use GraphQL::Guard.new(
+    policy_object: GraphqlPolicy,
+    not_authorized: ->(type, field) {
+      handler = GraphqlPolicy.<b>not_authorized_handler</b>(type, field)
+      handler.call(type, field)
+    }
+  )
+end
 </pre>
 
 ## Installation
