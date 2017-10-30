@@ -128,6 +128,13 @@ Schema = GraphQL::Schema.define do
 end
 </pre>
 
+When using a policy object, you may want to allow [introspection queries](http://graphql.org/learn/introspection/) to skip authorization. A simple way to avoid having to whitelist every introspection type in the RULES hash of your policy object is to check the <b>type</b> in the guard method: 
+<pre> 
+  def self.guard(type, field)
+    <b>type.introspection?</b> || RULES.dig(type, field)
+  end
+</pre>
+
 ## Priority order
 
 `GraphQL::Guard` will use the policy in the following order of priority:
