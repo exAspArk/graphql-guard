@@ -132,7 +132,7 @@ When using a policy object, you may want to allow [introspection queries](http:/
 
 <pre>
 def self.guard(type, field)
-  <b>type.introspection?</b> || RULES.dig(type, field)
+  <b>type.introspection? ? ->(obj, args, ctx) { false } :</b> RULES.dig(type, field)
 end
 </pre>
 
