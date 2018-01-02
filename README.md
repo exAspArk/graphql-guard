@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/exAspArk/graphql-guard.svg?branch=master)](https://travis-ci.org/exAspArk/graphql-guard)
 [![Coverage Status](https://coveralls.io/repos/github/exAspArk/graphql-guard/badge.svg)](https://coveralls.io/github/exAspArk/graphql-guard)
-[![Code Climate](https://img.shields.io/codeclimate/github/exAspArk/graphql-guard.svg)](https://codeclimate.com/github/exAspArk/graphql-guard)
+[![Code Climate](https://img.shields.io/codeclimate/maintainability/exAspArk/graphql-guard.svg)](https://codeclimate.com/github/exAspArk/graphql-guard/maintainability)
 [![Downloads](https://img.shields.io/gem/dt/graphql-guard.svg)](https://rubygems.org/gems/graphql-guard)
 [![Latest Version](https://img.shields.io/gem/v/graphql-guard.svg)](https://rubygems.org/gems/graphql-guard)
 
