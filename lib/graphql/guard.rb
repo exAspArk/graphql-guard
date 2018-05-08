@@ -5,6 +5,7 @@ require "graphql/guard/version"
 
 GraphQL::ObjectType.accepts_definitions(guard: GraphQL::Define.assign_metadata_key(:guard))
 GraphQL::Field.accepts_definitions(guard: GraphQL::Define.assign_metadata_key(:guard))
+GraphQL::Field.accepts_definitions(mask: GraphQL::Define.assign_metadata_key(:mask))
 
 module GraphQL
   class Guard
@@ -22,6 +23,13 @@ module GraphQL
 
     def use(schema_definition)
       schema_definition.instrument(:field, self)
+      schema_definition.target.instance_eval do
+        def default_filter
+          GraphQL::Filter.new(except: default_mask).merge(only: ->(schema_member, ctx) {
+            schema_member.metadata[:mask] ? schema_member.metadata[:mask].call(ctx) : true
+          })
+        end
+      end
     end
 
     def instrument(type, field)

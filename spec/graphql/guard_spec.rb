@@ -51,6 +51,30 @@ RSpec.describe GraphQL::Guard do
     end
   end
 
+  context 'inline mask' do
+    it 'allows to query a field' do
+      user = User.new(id: '1', role: 'admin')
+      query = "query($user_id: ID!) { posts_with_mask(user_id: $user_id) { id } }"
+
+      result = Inline::Schema.execute(query, variables: {'user_id' => user.id}, context: {current_user: user})
+
+      expect(result.to_h).to eq({"data" => {"posts_with_mask" => [{"id" => "1"}]}})
+    end
+
+    it 'hides a field' do
+      user = User.new(id: '1', role: 'not_admin')
+      query = "query($user_id: ID!) { posts_with_mask(user_id: $user_id) { id } }"
+
+      result = Inline::Schema.execute(query, variables: {'user_id' => user.id}, context: {current_user: user})
+
+      expect(result['errors']).to include({
+        "message" => "Field 'posts_with_mask' doesn't exist on type 'Query'",
+        "locations" => [{"line" => 1, "column" => 24}],
+        "fields" => ["query", "posts_with_mask"]
+      })
+    end
+  end
+
   context 'policy object guard' do
     it 'authorizes to execute a query' do
       user = User.new(id: '1', role: 'admin')
