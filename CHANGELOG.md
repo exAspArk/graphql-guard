@@ -8,9 +8,13 @@ one of the following labels: `Added`, `Changed`, `Deprecated`,
 to manage the versions of this gem so
 that you can set version constraints properly.
 
-#### [Unreleased](https://github.com/exAspArk/graphql-guard/compare/v1.0.0...HEAD)
+#### [Unreleased](https://github.com/exAspArk/graphql-guard/compare/v1.1.0...HEAD)
 
 * WIP
+
+#### [v1.1.0](https://github.com/exAspArk/graphql-guard/compare/v1.0.0...v1.1.0) – 2018-05-09
+
+* `Added`: support to `mask` fields depending on the context.
 
 #### [v1.0.0](https://github.com/exAspArk/graphql-guard/compare/v0.4.0...v1.0.0) – 2017-07-31
 
