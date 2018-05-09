@@ -18,6 +18,7 @@ This gem provides a field-level authorization for [graphql-ruby](https://github.
   * [CanCanCan](#cancancan)
   * [Pundit](#pundit)
 * [Error handling](#error-handling)
+* [Schema masking](#schema-masking)
 * [Installation](#installation)
 * [Testing](#testing)
 * [Development](#development)
@@ -293,6 +294,22 @@ Schema = GraphQL::Schema.define do
       handler.call(type, field)
     }
   )
+end
+</pre>
+
+## Schema masking
+
+It's possible to hide fields from being introspectable and accessible based on the context. For example:
+
+<pre>
+PostType = GraphQL::ObjectType.define do
+  name "Post"
+
+  field :id, !types.ID
+  field :title, types.String do
+    # The field "title" is accessible only for beta testers
+    <b>mask ->(ctx) {</b> ctx[:current_user].beta_tester? <b>}</b>
+  end
 end
 </pre>
 

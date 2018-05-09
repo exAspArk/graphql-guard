@@ -15,6 +15,12 @@ module Inline
       guard ->(_obj, args, ctx) { args[:user_id] == ctx[:current_user].id }
       resolve ->(_obj, args, _ctx) { Post.where(user_id: args[:user_id]) }
     end
+
+    field :posts_with_mask, !types[!PostType] do
+      argument :user_id, !types.ID
+      mask ->(ctx) { ctx[:current_user].admin? }
+      resolve ->(_obj, args, _ctx) { Post.where(user_id: args[:user_id]) }
+    end
   end
 
   Schema = GraphQL::Schema.define do
