@@ -10,15 +10,15 @@ module PolicyObject
   QueryType = GraphQL::ObjectType.define do
     name "Query"
     field :posts, !types[!PostType] do
-      argument :user_id, !types.ID
-      resolve ->(_obj, args, _ctx) { Post.where(user_id: args[:user_id]) }
+      argument :userId, !types.ID
+      resolve ->(_obj, args, _ctx) { Post.where(user_id: args[:userId]) }
     end
   end
 
   class GraphqlPolicy
     RULES = {
       QueryType => {
-        posts: ->(_obj, args, ctx) { args[:user_id] == ctx[:current_user].id }
+        posts: ->(_obj, args, ctx) { args[:userId] == ctx[:current_user].id }
       },
       PostType => {
         '*': ->(_post, args, ctx) { ctx[:current_user].admin? }

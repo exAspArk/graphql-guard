@@ -11,15 +11,15 @@ module Inline
   QueryType = GraphQL::ObjectType.define do
     name "Query"
     field :posts, !types[!PostType] do
-      argument :user_id, !types.ID
-      guard ->(_obj, args, ctx) { args[:user_id] == ctx[:current_user].id }
-      resolve ->(_obj, args, _ctx) { Post.where(user_id: args[:user_id]) }
+      argument :userId, !types.ID
+      guard ->(_obj, args, ctx) { args[:userId] == ctx[:current_user].id }
+      resolve ->(_obj, args, _ctx) { Post.where(user_id: args[:userId]) }
     end
 
-    field :posts_with_mask, !types[!PostType] do
-      argument :user_id, !types.ID
+    field :postsWithMask, !types[!PostType] do
+      argument :userId, !types.ID
       mask ->(ctx) { ctx[:current_user].admin? }
-      resolve ->(_obj, args, _ctx) { Post.where(user_id: args[:user_id]) }
+      resolve ->(_obj, args, _ctx) { Post.where(user_id: args[:userId]) }
     end
   end
 
