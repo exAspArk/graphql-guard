@@ -8,6 +8,22 @@ GraphQL::Field.accepts_definitions(guard: GraphQL::Define.assign_metadata_key(:g
 GraphQL::Field.accepts_definitions(mask: GraphQL::Define.assign_metadata_key(:mask))
 
 module GraphQL
+  class Schema
+    class Object
+      accepts_definition :guard
+      accepts_definition :mask
+
+      field_class(
+        Class.new(GraphQL::Schema::Field) {
+          accepts_definition :guard
+          accepts_definition :mask
+        }
+      )
+    end
+  end
+end
+
+module GraphQL
   class Guard
     ANY_FIELD_NAME = :'*'
     DEFAULT_NOT_AUTHORIZED = ->(type, field) { raise NotAuthorizedError.new("#{type}.#{field}") }
