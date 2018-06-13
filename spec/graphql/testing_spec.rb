@@ -11,31 +11,70 @@ require "graphql/guard/testing"
 
 RSpec.describe GraphQL::Guard do
   context 'inline guard' do
-    it 'returns true for an authorized field' do
-      posts_field = Inline::QueryType.field_with_guard('posts')
-      user = User.new(id: '1', role: 'admin')
+    context 'with a authorizable user' do
+      let(:user) { User.new(id: '1', role: 'admin') }
 
-      result = posts_field.guard(nil, {userId: user.id}, {current_user: user})
+      subject { query_type.field_with_guard('posts').guard(nil, {userId: user.id}, {current_user: user}) }
 
-      expect(result).to eq(true)
+      context 'and using legacy-style schema' do
+        let(:query_type) { Inline::QueryType }
+
+        it 'returns true for an authorized field' do
+          expect(subject).to eq(true)
+        end
+      end
+
+      context 'and using class-based schema' do
+        let(:query_type) { Inline::ClassBasedQuery }
+
+        it 'returns true for an authorized field' do
+          expect(subject).to eq(true)
+        end
+      end
     end
 
-    it 'returns false for a not authorized field' do
-      posts_field = Inline::QueryType.field_with_guard('posts')
-      user = User.new(id: '1', role: 'admin')
+    context 'with a not authorizable user' do
+      let(:user) { User.new(id: '1', role: 'admin') }
 
-      result = posts_field.guard(nil, {userId: '2'}, {current_user: user})
+      subject { query_type.field_with_guard('posts').guard(nil, {userId: '2'}, {current_user: user}) }
 
-      expect(result).to eq(false)
+      context 'and using legacy-style schema' do
+        let(:query_type) { Inline::QueryType }
+
+        it 'returns false for a not authorized field' do
+          expect(subject).to eq(false)
+        end
+      end
+
+      context 'and using class-based schema' do
+        let(:query_type) { Inline::ClassBasedQuery }
+
+        it 'returns false for a not authorized field' do
+          expect(subject).to eq(false)
+        end
+      end
     end
 
-    it 'returns false for a field with a policy on the type' do
-      posts_field = Inline::PostType.field_with_guard('id')
-      user = User.new(id: '1', role: 'not_admin')
+    context 'with a not admin user' do
+      let(:user) { User.new(id: '1', role: 'not_admin') }
 
-      result = posts_field.guard(nil, nil, {current_user: user})
+      subject { post_type.field_with_guard('id').guard(nil, nil, {current_user: user}) }
 
-      expect(result).to eq(false)
+      context 'and using legacy-style schema' do
+        let(:post_type) { Inline::PostType }
+
+        it 'returns false for a field with a policy on the type' do
+          expect(subject).to eq(false)
+        end
+      end
+
+      context 'and using class-based schema' do
+        let(:post_type) { Inline::ClassBasedPost }
+
+        it 'returns false for a not authorized field' do
+          expect(subject).to eq(false)
+        end
+      end
     end
   end
 

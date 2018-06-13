@@ -33,4 +33,18 @@ module GraphQL
       end
     end
   end
+
+  class Schema
+    class Object
+      def self.field_with_guard(field_name, policy_object = nil)
+        field = fields[field_name]
+        return unless field
+
+        field.to_graphql.clone.tap do |f|
+          f.__policy_object = policy_object
+          f.__guard_type = self.to_graphql
+        end
+      end
+    end
+  end
 end
