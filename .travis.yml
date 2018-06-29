@@ -5,3 +5,9 @@ rvm:
 env:
   - CI=true
 before_install: gem install bundler -v 1.15.2
+matrix:
+  include:
+    - gemfile: graphql-1.7.gemfile
+      env: GRAPHQL_RUBY_VERSION=1_7
+    - gemfile: graphql-1.8.gemfile
+      env: GRAPHQL_RUBY_VERSION=1_8
