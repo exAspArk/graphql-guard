@@ -5,6 +5,8 @@ require "bundler/setup"
 ENV['GRAPHQL_RUBY_VERSION'] ||= '1_8'
 
 if ENV['CI']
+  require 'simplecov'
+  SimpleCov.add_filter('spec')
   require 'coveralls'
   Coveralls.wear!
 end
