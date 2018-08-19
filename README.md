@@ -66,16 +66,16 @@ Schema.execute(query, variables: { user_id: 1 }, context: { current_user: curren
 
 Add `GraphQL::Guard` to your schema:
 
-<pre>
+```ruby
 Schema = GraphQL::Schema.define do
   query QueryType
   <b>use GraphQL::Guard.new</b>
 end
-</pre>
+```
 
 Now you can define `guard` for a field, which will check permissions before resolving the field:
 
-<pre>
+```ruby
 QueryType = GraphQL::ObjectType.define do
   name "Query"
 
@@ -85,17 +85,17 @@ QueryType = GraphQL::ObjectType.define do
     ...
   end
 end
-</pre>
+```
 
 You can also define `guard`, which will be executed for every `*` field in the type:
 
-<pre>
+```ruby
 PostType = GraphQL::ObjectType.define do
   name "Post"
   <b>guard ->(obj, args, ctx) {</b> ctx[:current_user].admin? <b>}</b>
   ...
 end
-</pre>
+```
 
 If `guard` block returns `nil` or `false`, then it'll raise a `GraphQL::Guard::NotAuthorizedError` error.
 
@@ -103,7 +103,7 @@ If `guard` block returns `nil` or `false`, then it'll raise a `GraphQL::Guard::N
 
 Alternatively, it's possible to extract and describe all policies by using PORO (Plain Old Ruby Object), which should implement a `guard` method. For example:
 
-<pre>
+```ruby
 class <b>GraphqlPolicy</b>
   RULES = {
     QueryType => {
@@ -118,24 +118,24 @@ class <b>GraphqlPolicy</b>
     RULES.dig(type, field)
   end
 end
-</pre>
+```
 
 Pass this object to `GraphQL::Guard`:
 
-<pre>
+```ruby
 Schema = GraphQL::Schema.define do
   query QueryType
   use GraphQL::Guard.new(<b>policy_object: GraphqlPolicy</b>)
 end
-</pre>
+```
 
 When using a policy object, you may want to allow [introspection queries](http://graphql.org/learn/introspection/) to skip authorization. A simple way to avoid having to whitelist every introspection type in the `RULES` hash of your policy object is to check the `type` parameter in the `guard` method:
 
-<pre>
+```ruby
 def self.guard(type, field)
   <b>type.introspection? ? ->(_obj, _args, _ctx) { true } :</b> RULES.dig(type, field) # or "false" to restrict an access
 end
-</pre>
+```
 
 ## Priority order
 
@@ -146,7 +146,7 @@ end
 3. Inline policy on the type.
 2. Policy from the policy object on the type.
 
-<pre>
+```ruby
 class <b>GraphqlPolicy</b>
   RULES = {
     PostType => {
@@ -170,7 +170,7 @@ Schema = GraphQL::Schema.define do
   query QueryType
   use GraphQL::Guard.new(<b>policy_object: GraphqlPolicy</b>)
 end
-</pre>
+```
 
 ## Integration
 
@@ -178,7 +178,7 @@ You can simply reuse your existing policies if you really want. You don't need a
 
 ### CanCanCan
 
-<pre>
+```ruby
 # Define an ability
 class <b>Ability</b>
   include CanCan::Ability
@@ -202,11 +202,11 @@ end
 
 # Pass the ability
 Schema.execute(query, context: { <b>current_ability: Ability.new(current_user)</b> })
-</pre>
+```
 
 ### Pundit
 
-<pre>
+```ruby
 # Define a policy
 class <b>PostPolicy</b> < ApplicationPolicy
   def show?
@@ -223,14 +223,14 @@ end
 
 # Pass current_user
 Schema.execute(query, context: { <b>current_user: current_user</b> })
-</pre>
+```
 
 ## Error handling
 
 By default `GraphQL::Guard` raises a `GraphQL::Guard::NotAuthorizedError` exception if access to the field is not authorized.
 You can change this behavior, by passing custom `not_authorized` lambda. For example:
 
-<pre>
+```ruby
 SchemaWithErrors = GraphQL::Schema.define do
   query QueryType
   use GraphQL::Guard.new(
@@ -241,11 +241,11 @@ SchemaWithErrors = GraphQL::Schema.define do
     <b>not_authorized: ->(type, field) { GraphQL::ExecutionError.new("Not authorized to access #{type}.#{field}") }</b>
   )
 end
-</pre>
+```
 
 In this case executing a query will continue, but return `nil` for not authorized field and also an array of `errors`:
 
-<pre>
+```ruby
 SchemaWithErrors.execute("query { <b>posts</b>(user_id: 1) { id title } }")
 # => {
 #   "data" => <b>nil</b>,
@@ -255,11 +255,11 @@ SchemaWithErrors.execute("query { <b>posts</b>(user_id: 1) { id title } }")
 #     "path" => [<b>"posts"</b>]
 #   }]
 # }
-</pre>
+```
 
 In more advanced cases, you may want not to return `errors` only for some unauthorized fields. Simply return `nil` if user is not authorized to access the field. You can achieve it, for example, by placing the logic into your `PolicyObject`:
 
-<pre>
+```ruby
 class <b>GraphqlPolicy</b>
   RULES = {
     PostType => {
@@ -295,13 +295,13 @@ Schema = GraphQL::Schema.define do
     }
   )
 end
-</pre>
+```
 
 ## Schema masking
 
 It's possible to hide fields from being introspectable and accessible based on the context. For example:
 
-<pre>
+```ruby
 PostType = GraphQL::ObjectType.define do
   name "Post"
 
@@ -311,7 +311,7 @@ PostType = GraphQL::ObjectType.define do
     <b>mask ->(ctx) {</b> ctx[:current_user].beta_tester? <b>}</b>
   end
 end
-</pre>
+```
 
 ## Installation
 
@@ -333,7 +333,7 @@ Or install it yourself as:
 
 It's possible to test fields with `guard` in isolation:
 
-<pre>
+```ruby
 # Your type
 QueryType = GraphQL::ObjectType.define do
   name "Query"
@@ -346,12 +346,12 @@ end
 posts = QueryType.<b>field_with_guard('posts')</b>
 result = posts.<b>guard(obj, args, ctx)</b>
 expect(result).to eq(true)
-</pre>
+```
 
 If you would like to test your fields with policy objects:
 
 
-<pre>
+```ruby
 # Your type
 QueryType = GraphQL::ObjectType.define do
   name "Query"
@@ -371,7 +371,7 @@ end
 posts = QueryType.<b>field_with_guard('posts', GraphqlPolicy)</b>
 result = posts.<b>guard(obj, args, ctx)</b>
 expect(result).to eq(true)
-</pre>
+```
 
 ## Development
 
