@@ -12,6 +12,10 @@ that you can set version constraints properly.
 
 * WIP
 
+#### [v1.2.1](https://github.com/exAspArk/graphql-guard/compare/v1.2.0...v1.2.1) – 2018-10-18
+
+* `Fixed`: compatibility with Ruby 2.5 and `graphql` gem version 1.7. [#21](https://github.com/exAspArk/graphql-guard/pull/21)
+
 #### [v1.2.0](https://github.com/exAspArk/graphql-guard/compare/v1.1.0...v1.2.0) – 2018-06-29
 
 * `Added`: support for `graphql` gem version 1.8. [#17](https://github.com/exAspArk/graphql-guard/pull/17)
