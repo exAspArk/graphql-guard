@@ -75,7 +75,7 @@ if GraphQL::ObjectType.respond_to?(:accepts_definitions) # GraphQL-Ruby version 
   GraphQL::Field.accepts_definitions(mask: GraphQL::Define.assign_metadata_key(:mask))
 end
 
-if GraphQL::Schema::Object.respond_to?(:accepts_definition) # GraphQL-Ruby version >= 1.8
+if Object.const_defined?('GraphQL::Schema::Object') && GraphQL::Schema::Object.respond_to?(:accepts_definition) # GraphQL-Ruby version >= 1.8
   GraphQL::Schema::Object.accepts_definition(:guard)
   GraphQL::Schema::Field.accepts_definition(:guard)
   GraphQL::Schema::Field.accepts_definition(:mask)
