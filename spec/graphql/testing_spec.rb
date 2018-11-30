@@ -58,6 +58,7 @@ RSpec.describe GraphQL::Guard do
       }.to raise_error(GraphQL::Field::NoGuardError, "Guard lambda does not exist for Query.posts")
     end
 
+    if ENV['GRAPHQL_RUBY_VERSION'] == '1_7'
     it 'raises an error if the field was fetched without guard' do
       posts_field = PolicyObject::QueryType.get_field('posts')
       user = User.new(id: '1', role: 'admin')
@@ -65,6 +66,7 @@ RSpec.describe GraphQL::Guard do
       expect {
         posts_field.guard(nil, {userId: user.id}, {current_user: user})
       }.to raise_error(GraphQL::Field::NoGuardError, "Get your field by calling: Type.field_with_guard('posts')")
+    end
     end
 
     it 'returns false for a not authorized field' do
