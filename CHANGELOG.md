@@ -8,9 +8,13 @@ one of the following labels: `Added`, `Changed`, `Deprecated`,
 to manage the versions of this gem so
 that you can set version constraints properly.
 
-#### [Unreleased](https://github.com/exAspArk/graphql-guard/compare/v1.2.1...HEAD)
+#### [Unreleased](https://github.com/exAspArk/graphql-guard/compare/v1.2.2...HEAD)
 
 * WIP
+
+#### [v1.2.2](https://github.com/exAspArk/graphql-guard/compare/v1.2.1...v1.2.2) – 2019-03-04
+
+* `Fixed`: compatibility with Ruby 2.6 and `graphql` gem version 1.7. [#26](https://github.com/exAspArk/graphql-guard/pull/26)
 
 #### [v1.2.1](https://github.com/exAspArk/graphql-guard/compare/v1.2.0...v1.2.1) – 2018-10-18
 
