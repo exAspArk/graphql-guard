@@ -6,7 +6,7 @@ require "graphql/guard/version"
 module GraphQL
   class Guard
     ANY_FIELD_NAME = :'*'
-    DEFAULT_NOT_AUTHORIZED = ->(type, field) { raise NotAuthorizedError.new("#{type}.#{field}") }
+    DEFAULT_NOT_AUTHORIZED = ->(type, field) { raise NotAuthorizedError.new("Not authorized to access: #{type}.#{field}") }
 
     NotAuthorizedError = Class.new(StandardError)
 

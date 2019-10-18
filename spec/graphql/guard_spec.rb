@@ -24,7 +24,7 @@ RSpec.describe GraphQL::Guard do
 
       expect {
         Inline::Schema.execute(query, variables: {'userId' => '2'}, context: {current_user: user})
-      }.to raise_error(GraphQL::Guard::NotAuthorizedError, 'Query.posts')
+      }.to raise_error(GraphQL::Guard::NotAuthorizedError, 'Not authorized to access: Query.posts')
     end
 
     it 'does not authorize a field with a policy on the type' do
@@ -33,7 +33,7 @@ RSpec.describe GraphQL::Guard do
 
       expect {
         Inline::Schema.execute(query, variables: {'userId' => '1'}, context: {current_user: user})
-      }.to raise_error(GraphQL::Guard::NotAuthorizedError, 'Post.id')
+      }.to raise_error(GraphQL::Guard::NotAuthorizedError, 'Not authorized to access: Post.id')
     end
 
     it 'does not authorize a field and returns an error' do
@@ -91,7 +91,7 @@ RSpec.describe GraphQL::Guard do
 
       expect {
         PolicyObject::Schema.execute(query, variables: {'userId' => '2'}, context: {current_user: user})
-      }.to raise_error(GraphQL::Guard::NotAuthorizedError, 'Query.posts')
+      }.to raise_error(GraphQL::Guard::NotAuthorizedError, 'Not authorized to access: Query.posts')
     end
 
     it 'does not authorize a field with a policy on the type' do
@@ -100,7 +100,7 @@ RSpec.describe GraphQL::Guard do
 
       expect {
         PolicyObject::Schema.execute(query, variables: {'userId' => '1'}, context: {current_user: user})
-      }.to raise_error(GraphQL::Guard::NotAuthorizedError, 'Post.id')
+      }.to raise_error(GraphQL::Guard::NotAuthorizedError, 'Not authorized to access: Post.id')
     end
   end
 end
