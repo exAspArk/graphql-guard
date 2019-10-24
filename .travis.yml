@@ -23,7 +23,7 @@ matrix:
       rvm: 2.5.7
     - gemfile: graphql-1.7.gemfile
       env: GRAPHQL_RUBY_VERSION=1_7 CI=true
-      rvm: 2.6.1
+      rvm: 2.6.5
     - gemfile: graphql-1.8.gemfile
       env: GRAPHQL_RUBY_VERSION=1_8 CI=true
-      rvm: 2.6.1
+      rvm: 2.6.5
