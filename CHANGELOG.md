@@ -8,9 +8,13 @@ one of the following labels: `Added`, `Changed`, `Deprecated`,
 to manage the versions of this gem so
 that you can set version constraints properly.
 
-#### [Unreleased](https://github.com/exAspArk/graphql-guard/compare/v1.2.2...HEAD)
+#### [Unreleased](https://github.com/exAspArk/graphql-guard/compare/v1.3.0...HEAD)
 
 * WIP
+
+#### [v1.3.0](https://github.com/exAspArk/graphql-guard/compare/v1.2.2...v1.3.0) – 2019-10-24
+
+* `Added`: More descriptive default error message for `NotAuthorizedError`. [#32](https://github.com/exAspArk/graphql-guard/pull/32)
 
 #### [v1.2.2](https://github.com/exAspArk/graphql-guard/compare/v1.2.1...v1.2.2) – 2019-03-04
 
