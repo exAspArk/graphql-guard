@@ -1,6 +1,6 @@
 sudo: false
 language: ruby
-before_install: gem install bundler -v 1.15.2
+before_install: gem install bundler -v 1.17.3
 matrix:
   include:
     - gemfile: graphql-1.7.gemfile
@@ -17,10 +17,10 @@ matrix:
       rvm: 2.4.5
     - gemfile: graphql-1.7.gemfile
       env: GRAPHQL_RUBY_VERSION=1_7 CI=true
-      rvm: 2.5.3
+      rvm: 2.5.7
     - gemfile: graphql-1.8.gemfile
       env: GRAPHQL_RUBY_VERSION=1_8 CI=true
-      rvm: 2.5.3
+      rvm: 2.5.7
     - gemfile: graphql-1.7.gemfile
       env: GRAPHQL_RUBY_VERSION=1_7 CI=true
       rvm: 2.6.1
