@@ -120,11 +120,20 @@ class <b>GraphqlPolicy</b>
 end
 </pre>
 
-With `graphql-ruby` gem version >= 1.8 and class-based type definitions, `type` doesn't return the actual type class [rmosolgo/graphql-ruby#1429](https://github.com/rmosolgo/graphql-ruby/issues/1429). To get the actual type class:
+With `graphql-ruby` gem version >= 1.8 and class-based type definitions, use `camelCased` field names in the policy object.
+You'd also need to use `type.metadata` (related to [rmosolgo/graphql-ruby#1429](https://github.com/rmosolgo/graphql-ruby/issues/1429)) to get the type class:
 
 <pre>
-def self.guard(type, field)
-  RULES.dig(<b>type.metadata[:type_class]</b>, field)
+class GraphqlPolicy
+  RULES = {
+    MutationType => {
+      <b>createPost</b>: ->(obj, args, cts) { ctx[:current_user].admin? }
+    }
+  }
+
+  def self.guard(type, field)
+    RULES.dig(<b>type.metadata[:type_class]</b>, field)
+  end
 end
 </pre>
 
