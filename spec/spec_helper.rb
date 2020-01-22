@@ -2,7 +2,7 @@
 
 require "bundler/setup"
 
-ENV['GRAPHQL_RUBY_VERSION'] ||= '1_8'
+ENV['GRAPHQL_RUBY_VERSION'] ||= 'LATEST'
 
 if ENV['CI']
   require 'simplecov'

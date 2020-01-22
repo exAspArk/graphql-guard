@@ -36,7 +36,7 @@ module Inline
         GraphQL::ExecutionError.new("Not authorized to access #{type}.#{field}")
       })
     end
-  when '1_8'
+  when 'LATEST'
     class PostType < GraphQL::Schema::Object
       guard ->(_post, _args, ctx) { ctx[:current_user].admin? }
       field :id, ID, null: false

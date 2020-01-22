@@ -19,13 +19,7 @@ module GraphQL
 
     def use(schema_definition)
       schema_definition.instrument(:field, self)
-      schema_definition.target.instance_eval do
-        def default_filter
-          GraphQL::Filter.new(except: default_mask).merge(only: ->(schema_member, ctx) {
-            schema_member.metadata[:mask] ? schema_member.metadata[:mask].call(ctx) : true
-          })
-        end
-      end
+      add_schema_masking!(schema_definition)
     end
 
     def instrument(type, field)
@@ -54,6 +48,22 @@ module GraphQL
     end
 
     private
+
+    def add_schema_masking!(schema_definition)
+      default_filter_proc = Proc.new do
+        def default_filter
+          GraphQL::Filter.new(except: default_mask).merge(only: ->(schema_member, ctx) {
+            schema_member.metadata[:mask] ? schema_member.metadata[:mask].call(ctx) : true
+          })
+        end
+      end
+
+      if schema_definition.is_a?(Class) # GraphQL-Ruby version >= 1.10
+        schema_definition.class_eval(&default_filter_proc)
+      else
+        schema_definition.target.instance_eval(&default_filter_proc)
+      end
+    end
 
     def policy_object_guard(type, field_name)
       policy_object && policy_object.guard(type, field_name)
