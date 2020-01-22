@@ -12,6 +12,10 @@ that you can set version constraints properly.
 
 * WIP
 
+#### [v1.3.1](https://github.com/exAspArk/graphql-guard/compare/v1.3.0...v1.3.1) – 2020-01-22
+
+* `Fixed`: compatibility with `graphql` gem version 1.10. [#36](https://github.com/exAspArk/graphql-guard/pull/36)
+
 #### [v1.3.0](https://github.com/exAspArk/graphql-guard/compare/v1.2.2...v1.3.0) – 2019-10-24
 
 * `Added`: More descriptive default error message for `NotAuthorizedError`. [#32](https://github.com/exAspArk/graphql-guard/pull/32)
