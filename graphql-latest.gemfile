@@ -3,6 +3,6 @@ source "https://rubygems.org"
 gem "pry"
 gem 'coveralls'
 
-gem "graphql", "~> 1.8.4"
+gem "graphql", "~> 1.10"
 
 gemspec

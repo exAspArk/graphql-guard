@@ -36,7 +36,7 @@ module PolicyObject
       query QueryType
       use GraphQL::Guard.new(policy_object: GraphqlPolicy)
     end
-  when '1_8'
+  when 'LATEST'
     class PostType < GraphQL::Schema::Object
       field :id, ID, null: false
       field :title, String, null: true
