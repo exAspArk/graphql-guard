@@ -55,6 +55,8 @@ end
 
 # Define a schema
 Schema = GraphQL::Schema.define do
+  use GraphQL::Execution::Interpreter
+  use GraphQL::Analysis::AST
   query QueryType
 end
 
@@ -68,6 +70,8 @@ Add `GraphQL::Guard` to your schema:
 
 <pre>
 Schema = GraphQL::Schema.define do
+  use GraphQL::Execution::Interpreter
+  use GraphQL::Analysis::AST
   query QueryType
   <b>use GraphQL::Guard.new</b>
 end
@@ -141,6 +145,8 @@ Pass this object to `GraphQL::Guard`:
 
 <pre>
 Schema = GraphQL::Schema.define do
+  use GraphQL::Execution::Interpreter
+  use GraphQL::Analysis::AST
   query QueryType
   use GraphQL::Guard.new(<b>policy_object: GraphqlPolicy</b>)
 end
@@ -184,6 +190,8 @@ PostType = GraphQL::ObjectType.define do
 end
 
 Schema = GraphQL::Schema.define do
+  use GraphQL::Execution::Interpreter
+  use GraphQL::Analysis::AST
   query QueryType
   use GraphQL::Guard.new(<b>policy_object: GraphqlPolicy</b>)
 end
@@ -249,6 +257,8 @@ You can change this behavior, by passing custom `not_authorized` lambda. For exa
 
 <pre>
 SchemaWithErrors = GraphQL::Schema.define do
+  use GraphQL::Execution::Interpreter
+  use GraphQL::Analysis::AST
   query QueryType
   use GraphQL::Guard.new(
     # By default it raises an error
@@ -301,6 +311,8 @@ class <b>GraphqlPolicy</b>
 end
 
 Schema = GraphQL::Schema.define do
+  use GraphQL::Execution::Interpreter
+  use GraphQL::Analysis::AST
   query QueryType
   mutation MutationType
 
