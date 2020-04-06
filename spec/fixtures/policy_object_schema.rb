@@ -19,7 +19,7 @@ module PolicyObject
   class GraphqlPolicy
     RULES = {
       QueryType => {
-        posts: ->(_obj, args, ctx) { args[:userId] == ctx[:current_user].id }
+        posts: ->(_obj, args, ctx) { args[:user_id] == ctx[:current_user].id }
       },
       PostType => {
         '*': ->(_post, args, ctx) { ctx[:current_user].admin? }
@@ -27,7 +27,7 @@ module PolicyObject
     }
 
     def self.guard(type, field)
-      RULES.dig(type.metadata[:type_class], field)
+      RULES.dig(type, field)
     end
   end
 

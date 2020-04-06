@@ -15,7 +15,7 @@ RSpec.describe GraphQL::Guard do
       posts_field = Inline::QueryType.field_with_guard('posts')
       user = User.new(id: '1', role: 'admin')
 
-      result = posts_field.guard(nil, {userId: user.id}, {current_user: user})
+      result = posts_field.guard(nil, {user_id: user.id}, {current_user: user})
 
       expect(result).to eq(true)
     end
@@ -24,7 +24,7 @@ RSpec.describe GraphQL::Guard do
       posts_field = Inline::QueryType.field_with_guard('posts')
       user = User.new(id: '1', role: 'admin')
 
-      result = posts_field.guard(nil, {userId: '2'}, {current_user: user})
+      result = posts_field.guard(nil, {user_id: '2'}, {current_user: user})
 
       expect(result).to eq(false)
     end
@@ -44,7 +44,7 @@ RSpec.describe GraphQL::Guard do
       posts_field = PolicyObject::QueryType.field_with_guard('posts', PolicyObject::GraphqlPolicy)
       user = User.new(id: '1', role: 'admin')
 
-      result = posts_field.guard(nil, {userId: user.id}, {current_user: user})
+      result = posts_field.guard(nil, {user_id: user.id}, {current_user: user})
 
       expect(result).to eq(true)
     end
@@ -54,7 +54,7 @@ RSpec.describe GraphQL::Guard do
       user = User.new(id: '1', role: 'admin')
 
       expect {
-        posts_field.guard(nil, {userId: user.id}, {current_user: user})
+        posts_field.guard(nil, {user_id: user.id}, {current_user: user})
       }.to raise_error(GraphQL::Field::NoGuardError, "Guard lambda does not exist for Query.posts")
     end
 
@@ -62,7 +62,7 @@ RSpec.describe GraphQL::Guard do
       posts_field = PolicyObject::QueryType.field_with_guard('posts', PolicyObject::GraphqlPolicy)
       user = User.new(id: '1', role: 'admin')
 
-      result = posts_field.guard(nil, {userId: '2'}, {current_user: user})
+      result = posts_field.guard(nil, {user_id: '2'}, {current_user: user})
 
       expect(result).to eq(false)
     end
