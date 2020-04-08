@@ -5,7 +5,6 @@ require "spec_helper"
 require 'fixtures/user'
 require 'fixtures/post'
 require 'fixtures/inline_schema'
-require 'fixtures/inline_without_exceptions_schema'
 require 'fixtures/policy_object_schema'
 
 RSpec.describe GraphQL::Guard do
@@ -41,7 +40,7 @@ RSpec.describe GraphQL::Guard do
       user = User.new(id: '1', role: 'not_admin')
       query = "query($userId: ID!) { posts(userId: $userId) { id title } }"
 
-      result = InlineWithoutExceptions::Schema.execute(query, variables: {userId: 1}, context: {current_user: user})
+      result = Inline::SchemaWithoutExceptions.execute(query, variables: {userId: 1}, context: {current_user: user})
 
       expect(result['errors']).to eq([{
         "message" => "Not authorized to access Post.id",

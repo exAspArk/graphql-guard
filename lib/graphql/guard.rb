@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "graphql"
-require "graphql/guard/field_extension"
 require "graphql/guard/version"
 
 module GraphQL
@@ -28,14 +27,20 @@ module GraphQL
 
     def use(schema_definition)
       if schema_definition.interpreter?
-        fields(schema_definition).each do |field|
-          field.type_class.extension(GraphQL::Guard::FieldExtension, guard_instance: self)
-        end
+        schema_definition.tracer(self)
       else
         raise "Please use the graphql gem version >= 1.10 with GraphQL::Execution::Interpreter"
       end
 
       add_schema_masking!(schema_definition)
+    end
+
+    def trace(event, trace_data)
+      if event == 'execute_field'
+        ensure_guarded(trace_data) { yield }
+      else
+        yield
+      end
     end
 
     def find_guard_proc(type, field)
@@ -47,17 +52,23 @@ module GraphQL
 
     private
 
-    def fields(schema_definition)
-      schema_definition.types.values.flat_map { |type|
-        type.fields.values if type.name && type.respond_to?(:fields)
-      }.compact
-    end
-
     def add_schema_masking!(schema_definition)
       schema_definition.class_eval do
         def self.default_filter
           GraphQL::Filter.new(except: default_mask).merge(only: MASKING_FILTER)
         end
+      end
+    end
+
+    def ensure_guarded(trace_data)
+      field = trace_data[:field]
+      guard_proc = find_guard_proc(field.owner, field)
+      return yield unless guard_proc
+
+      if guard_proc.call(trace_data[:object], trace_data[:arguments], trace_data[:query].context)
+        yield
+      else
+        not_authorized.call(field.owner, field.name.to_sym)
       end
     end
 
