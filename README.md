@@ -26,10 +26,6 @@ This gem provides a field-level authorization for [graphql-ruby](https://github.
 * [License](#license)
 * [Code of Conduct](#code-of-conduct)
 
-<a href="https://www.hyrestaff.com/" target="_blank" rel="noopener noreferrer">
-  <img src="images/hyre.png" height="39" width="137" alt="Sponsored by Hyre" style="max-width:100%;">
-</a>
-
 ## Usage
 
 Define a GraphQL schema:
