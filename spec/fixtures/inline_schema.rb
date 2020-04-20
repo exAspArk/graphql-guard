@@ -59,7 +59,7 @@ module Inline
     use GraphQL::Analysis::AST
     query QueryType
     use GraphQL::Guard.new(not_authorized: ->(type, field) {
-      GraphQL::ExecutionError.new("Not authorized to access #{type.graphql_definition}.#{field}")
+      GraphQL::ExecutionError.new("Not authorized to access #{type}.#{field}")
     })
   end
 end

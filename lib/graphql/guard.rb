@@ -10,7 +10,7 @@ module GraphQL
     ANY_FIELD_NAME = :'*'
 
     DEFAULT_NOT_AUTHORIZED = ->(type, field) do
-      raise NotAuthorizedError.new("Not authorized to access: #{type.graphql_definition}.#{field}")
+      raise NotAuthorizedError.new("Not authorized to access: #{type}.#{field}")
     end
 
     MASKING_FILTER = ->(schema_member, ctx) do
@@ -70,7 +70,7 @@ module GraphQL
       if guard_proc.call(trace_data[:object], args(trace_data), trace_data[:query].context)
         yield
       else
-        not_authorized.call(field.owner, field.name.to_sym)
+        not_authorized.call(field.owner.graphql_definition, field.name.to_sym)
       end
     end
 

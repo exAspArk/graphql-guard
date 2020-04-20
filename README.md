@@ -239,12 +239,12 @@ class SchemaWithErrors < GraphQL::Schema
   use GraphQL::Guard.new(
     # By default it raises an error
     # not_authorized: ->(type, field) do
-    #   raise GraphQL::Guard::NotAuthorizedError.new("#{type.graphql_definition}.#{field}")
+    #   raise GraphQL::Guard::NotAuthorizedError.new("#{type}.#{field}")
     # end
 
     # Returns an error in the response
     <b>not_authorized: ->(type, field) do
-      GraphQL::ExecutionError.new("Not authorized to access #{type.graphql_definition}.#{field}")
+      GraphQL::ExecutionError.new("Not authorized to access #{type}.#{field}")
     end</b>
   )
 end
