@@ -5,10 +5,18 @@ require "graphql/guard/version"
 
 module GraphQL
   class Guard
-    ANY_FIELD_NAME = :'*'
-    DEFAULT_NOT_AUTHORIZED = ->(type, field) { raise NotAuthorizedError.new("Not authorized to access: #{type}.#{field}") }
-
     NotAuthorizedError = Class.new(StandardError)
+
+    ANY_FIELD_NAME = :'*'
+
+    DEFAULT_NOT_AUTHORIZED = ->(type, field) do
+      raise NotAuthorizedError.new("Not authorized to access: #{type}.#{field}")
+    end
+
+    MASKING_FILTER = ->(schema_member, ctx) do
+      mask = schema_member.graphql_definition.metadata[:mask]
+      mask ? mask.call(ctx) : true
+    end
 
     attr_reader :policy_object, :not_authorized
 
@@ -18,75 +26,75 @@ module GraphQL
     end
 
     def use(schema_definition)
-      schema_definition.instrument(:field, self)
+      if schema_definition.interpreter?
+        schema_definition.tracer(self)
+      else
+        raise "Please use the graphql gem version >= 1.10 with GraphQL::Execution::Interpreter"
+      end
+
       add_schema_masking!(schema_definition)
     end
 
-    def instrument(type, field)
-      guard_proc = guard_proc(type, field)
-      return field unless guard_proc
-
-      old_resolve_proc = field.resolve_proc
-      new_resolve_proc = ->(object, arguments, context) do
-        authorized = guard_proc.call(object, arguments, context)
-
-        if authorized
-          old_resolve_proc.call(object, arguments, context)
-        else
-          not_authorized.call(type, field.name.to_sym)
-        end
+    def trace(event, trace_data)
+      if event == 'execute_field'
+        ensure_guarded(trace_data) { yield }
+      else
+        yield
       end
-
-      field.redefine { resolve(new_resolve_proc) }
     end
 
-    def guard_proc(type, field)
-      inline_field_guard(field) ||
-        policy_object_guard(type, field.name.to_sym) ||
-        inline_type_guard(type) ||
-        policy_object_guard(type, ANY_FIELD_NAME)
+    def find_guard_proc(type, field)
+      return unless type.respond_to?(:type_class)
+
+      inline_guard(field) ||
+        policy_object_guard(type.type_class, field.name.to_sym) ||
+        inline_guard(type) ||
+        policy_object_guard(type.type_class, ANY_FIELD_NAME)
     end
 
     private
 
     def add_schema_masking!(schema_definition)
-      default_filter_proc = Proc.new do
-        def default_filter
-          GraphQL::Filter.new(except: default_mask).merge(only: ->(schema_member, ctx) {
-            schema_member.metadata[:mask] ? schema_member.metadata[:mask].call(ctx) : true
-          })
+      schema_definition.class_eval do
+        def self.default_filter
+          GraphQL::Filter.new(except: default_mask).merge(only: MASKING_FILTER)
         end
       end
+    end
 
-      if schema_definition.is_a?(Class) # GraphQL-Ruby version >= 1.10
-        schema_definition.class_eval(&default_filter_proc)
+    def ensure_guarded(trace_data)
+      field = trace_data[:field]
+      guard_proc = find_guard_proc(field.owner, field)
+      return yield unless guard_proc
+
+      if guard_proc.call(trace_data[:object], args(trace_data), trace_data[:query].context)
+        yield
       else
-        schema_definition.target.instance_eval(&default_filter_proc)
+        not_authorized.call(field.owner.graphql_definition, field.name.to_sym)
       end
+    end
+
+    def args(trace_data)
+      if trace_data[:arguments].key?(:input) && !trace_data[:arguments][:input].is_a?(Hash)
+        return trace_data[:arguments][:input] # Relay mutation input
+      end
+
+      trace_data[:arguments]
     end
 
     def policy_object_guard(type, field_name)
-      policy_object && policy_object.guard(type, field_name)
+      @policy_object && @policy_object.guard(type, field_name)
     end
 
-    def inline_field_guard(field)
-      field.metadata[:guard]
-    end
-
-    def inline_type_guard(type)
-      type.metadata[:guard]
+    def inline_guard(type_or_field)
+      type_or_field.graphql_definition.metadata[:guard]
     end
   end
 end
 
-if GraphQL::ObjectType.respond_to?(:accepts_definitions) # GraphQL-Ruby version < 1.8
-  GraphQL::ObjectType.accepts_definitions(guard: GraphQL::Define.assign_metadata_key(:guard))
-  GraphQL::Field.accepts_definitions(guard: GraphQL::Define.assign_metadata_key(:guard))
-  GraphQL::Field.accepts_definitions(mask: GraphQL::Define.assign_metadata_key(:mask))
-end
-
-if defined?(GraphQL::Schema::Object) && GraphQL::Schema::Object.respond_to?(:accepts_definition) # GraphQL-Ruby version >= 1.8
-  GraphQL::Schema::Object.accepts_definition(:guard)
-  GraphQL::Schema::Field.accepts_definition(:guard)
-  GraphQL::Schema::Field.accepts_definition(:mask)
-end
+GraphQL::ObjectType.accepts_definitions(guard: GraphQL::Define.assign_metadata_key(:guard))
+GraphQL::Field.accepts_definitions(guard: GraphQL::Define.assign_metadata_key(:guard))
+GraphQL::Field.accepts_definitions(mask: GraphQL::Define.assign_metadata_key(:mask))
+GraphQL::Schema::Object.accepts_definition(:guard)
+GraphQL::Schema::Field.accepts_definition(:guard)
+GraphQL::Schema::Field.accepts_definition(:mask)

@@ -2,8 +2,6 @@
 
 require "bundler/setup"
 
-ENV['GRAPHQL_RUBY_VERSION'] ||= 'LATEST'
-
 if ENV['CI']
   require 'simplecov'
   SimpleCov.add_filter('spec')

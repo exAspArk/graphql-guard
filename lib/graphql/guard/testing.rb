@@ -5,32 +5,18 @@ module GraphQL
     NoGuardError = Class.new(StandardError)
 
     def guard(*args)
-      raise NoGuardError.new("Get your field by calling: Type.field_with_guard('#{name}')") unless @__guard_type
-      guard_proc = @__guard_object.guard_proc(@__guard_type, self)
+      raise NoGuardError.new("Get your field by calling: Type.field_with_guard('#{name}')") unless @__guard_instance
+
+      guard_proc = @__guard_instance.find_guard_proc(@__guard_type, self)
       raise NoGuardError.new("Guard lambda does not exist for #{@__guard_type}.#{name}") unless guard_proc
 
       guard_proc.call(*args)
     end
 
-    def __policy_object=(policy_object)
+    def __set_guard_instance(policy_object, guard_type)
       @__policy_object = policy_object
-      @__guard_object = GraphQL::Guard.new(policy_object: policy_object)
-    end
-
-    def __guard_type=(guard_type)
       @__guard_type = guard_type
-    end
-  end
-
-  class ObjectType
-    def field_with_guard(field_name, policy_object = nil)
-      field = get_field(field_name)
-      return unless field
-
-      field.clone.tap do |f|
-        f.__policy_object = policy_object
-        f.__guard_type = self
-      end
+      @__guard_instance = GraphQL::Guard.new(policy_object: policy_object)
     end
   end
 
@@ -41,8 +27,7 @@ module GraphQL
         return unless field
 
         field.to_graphql.clone.tap do |f|
-          f.__policy_object = policy_object
-          f.__guard_type = self.to_graphql
+          f.__set_guard_instance(policy_object, self.to_graphql)
         end
       end
     end
