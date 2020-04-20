@@ -27,10 +27,30 @@ module Inline
     end
   end
 
+  class BaseMutationType < GraphQL::Schema::RelayClassicMutation
+  end
+
+  class CreatePostMutation < BaseMutationType
+    null true
+    argument :user_id, ID, required: true
+    field :post, PostType, null: true
+
+    def resolve(user_id:)
+      {post: Post.new(user_id: user_id)}
+    end
+  end
+
+  class MutationType < GraphQL::Schema::Object
+    field :create_post, mutation: CreatePostMutation do
+      guard ->(_obj, args, ctx) { args[:user_id] == ctx[:current_user].id }
+    end
+  end
+
   class Schema < GraphQL::Schema
     use GraphQL::Execution::Interpreter
     use GraphQL::Analysis::AST
     query QueryType
+    mutation MutationType
     use GraphQL::Guard.new
   end
 

@@ -44,10 +44,12 @@ module GraphQL
     end
 
     def find_guard_proc(type, field)
+      return unless type.respond_to?(:type_class)
+
       inline_guard(field) ||
-        policy_object_guard(type, field.name.to_sym) ||
+        policy_object_guard(type.type_class, field.name.to_sym) ||
         inline_guard(type) ||
-        policy_object_guard(type, ANY_FIELD_NAME)
+        policy_object_guard(type.type_class, ANY_FIELD_NAME)
     end
 
     private
@@ -65,15 +67,23 @@ module GraphQL
       guard_proc = find_guard_proc(field.owner, field)
       return yield unless guard_proc
 
-      if guard_proc.call(trace_data[:object], trace_data[:arguments], trace_data[:query].context)
+      if guard_proc.call(trace_data[:object], args(trace_data), trace_data[:query].context)
         yield
       else
         not_authorized.call(field.owner, field.name.to_sym)
       end
     end
 
+    def args(trace_data)
+      if trace_data[:arguments].key?(:input) && !trace_data[:arguments][:input].is_a?(Hash)
+        return trace_data[:arguments][:input] # Relay mutation input
+      end
+
+      trace_data[:arguments]
+    end
+
     def policy_object_guard(type, field_name)
-      @policy_object && @policy_object.guard(type.type_class, field_name)
+      @policy_object && @policy_object.guard(type, field_name)
     end
 
     def inline_guard(type_or_field)

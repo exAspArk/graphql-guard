@@ -49,6 +49,24 @@ RSpec.describe GraphQL::Guard do
       ])
       expect(result['data']).to eq(nil)
     end
+
+    it 'authorizes to execute a mutation' do
+      user = User.new(id: '1', role: 'admin')
+      query = "mutation($userId: ID!) { createPost(input: {userId: $userId}) { post { id title } } }"
+
+      result = Inline::Schema.execute(query, variables: {userId: user.id}, context: {current_user: user})
+
+      expect(result).to eq({"data" => {"createPost" => {"post" => {"id" => "1", "title" => "Post Title"}}}})
+    end
+
+    it 'does not authorize to execute a mutation' do
+      user = User.new(id: '1')
+      query = "mutation($userId: ID!) { createPost(input: {userId: $userId}) { post { id title } } }"
+
+      expect {
+        Inline::Schema.execute(query, variables: {userId: 2}, context: {current_user: user})
+      }.to raise_error(GraphQL::Guard::NotAuthorizedError, 'Not authorized to access: Mutation.createPost')
+    end
   end
 
   context 'inline mask' do
@@ -102,6 +120,24 @@ RSpec.describe GraphQL::Guard do
       expect {
         PolicyObject::Schema.execute(query, variables: {userId: 1}, context: {current_user: user})
       }.to raise_error(GraphQL::Guard::NotAuthorizedError, 'Not authorized to access: Post.id')
+    end
+
+    it 'authorizes to execute a mutation' do
+      user = User.new(id: '1', role: 'admin')
+      query = "mutation($userId: ID!) { createPost(input: {userId: $userId}) { post { id title } } }"
+
+      result = PolicyObject::Schema.execute(query, variables: {userId: user.id}, context: {current_user: user})
+
+      expect(result).to eq({"data" => {"createPost" => {"post" => {"id" => "1", "title" => "Post Title"}}}})
+    end
+
+    it 'does not authorize to execute a mutation' do
+      user = User.new(id: '1')
+      query = "mutation($userId: ID!) { createPost(input: {userId: $userId}) { post { id title } } }"
+
+      expect {
+        PolicyObject::Schema.execute(query, variables: {userId: 2}, context: {current_user: user})
+      }.to raise_error(GraphQL::Guard::NotAuthorizedError, 'Not authorized to access: Mutation.createPost')
     end
   end
 
