@@ -8,9 +8,67 @@ one of the following labels: `Added`, `Changed`, `Deprecated`,
 to manage the versions of this gem so
 that you can set version constraints properly.
 
-#### [Unreleased](https://github.com/exAspArk/graphql-guard/compare/v1.3.0...HEAD)
+#### [Unreleased](https://github.com/exAspArk/graphql-guard/compare/v2.0.0...HEAD)
 
 * WIP
+
+#### [v2.0.0](https://github.com/exAspArk/graphql-guard/compare/v1.3.1...v2.0.0) – 2020-04-20
+
+* `Added`: support for `graphql` gem version `>= 1.10` with `Interpreter`. [#39](https://github.com/exAspArk/graphql-guard/pull/39)
+* `Removed`: support for previous `graphql` gem versions. [#39](https://github.com/exAspArk/graphql-guard/pull/39)
+
+**Breaking changes**:
+
+* Requires using `graphql` gem version `>= 1.10.0` with [Interpreter](https://graphql-ruby.org/queries/interpreter.html).
+
+Before:
+
+```rb
+class Schema < GraphQL::Schema
+  query QueryType
+  mutation MutationType
+
+  use GraphQL::Guard.new
+end
+```
+
+After:
+
+```rb
+class Schema < GraphQL::Schema
+  use GraphQL::Execution::Interpreter
+  use GraphQL::Analysis::AST
+
+  query QueryType
+  mutation MutationType
+
+  use GraphQL::Guard.new
+end
+```
+
+
+* Use the actual type in the Policy object without `type.metadata[:type_class]`.
+
+Before (with `graphql` gem version `>= 1.8` and class-based type definitions):
+
+```rb
+class GraphqlPolicy
+  def self.guard(type, field)
+    RULES.dig(type.metadata[:type_class], field)
+  end
+end
+```
+
+After:
+
+```rb
+class GraphqlPolicy
+  def self.guard(type, field)
+    RULES.dig(type, field)
+  end
+end
+```
+
 
 #### [v1.3.1](https://github.com/exAspArk/graphql-guard/compare/v1.3.0...v1.3.1) – 2020-01-22
 
