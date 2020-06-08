@@ -4,6 +4,10 @@ class User
   ADMIN_ROLE = 'admin'
   NOT_ADMIN_ROLE = 'not_admin'
 
+  def self.all
+    [new(id: 1), new(id: 2)]
+  end
+
   attr_accessor :id, :role
 
   def initialize(id:, role: NOT_ADMIN_ROLE)

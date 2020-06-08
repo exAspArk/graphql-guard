@@ -95,6 +95,8 @@ end
 GraphQL::ObjectType.accepts_definitions(guard: GraphQL::Define.assign_metadata_key(:guard))
 GraphQL::Field.accepts_definitions(guard: GraphQL::Define.assign_metadata_key(:guard))
 GraphQL::Field.accepts_definitions(mask: GraphQL::Define.assign_metadata_key(:mask))
+GraphQL::Argument.accepts_definitions(mask: GraphQL::Define.assign_metadata_key(:mask))
 GraphQL::Schema::Object.accepts_definition(:guard)
 GraphQL::Schema::Field.accepts_definition(:guard)
 GraphQL::Schema::Field.accepts_definition(:mask)
+GraphQL::Schema::Argument.accepts_definition(:mask)

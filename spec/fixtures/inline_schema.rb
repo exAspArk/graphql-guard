@@ -7,6 +7,11 @@ module Inline
     field :title, String, null: true
   end
 
+  class UserType < GraphQL::Schema::Object
+    field :id, ID, null: false
+    field :role, String, null: false
+  end
+
   class QueryType < GraphQL::Schema::Object
     field :posts, [PostType], null: false do
       argument :user_id, ID, required: true
@@ -18,12 +23,24 @@ module Inline
       mask ->(ctx) { ctx[:current_user].admin? }
     end
 
+    field :users_with_argument_mask, [UserType], null: false do
+      argument :user_id, ID, required: true, mask: ->(ctx) { ctx[:current_user].admin? }
+    end
+
     def posts(user_id:)
       Post.where(user_id: user_id)
     end
 
     def posts_with_mask(user_id:)
       Post.where(user_id: user_id)
+    end
+
+    def users_with_argument_mask(user_id: nil)
+      if user_id.nil?
+        User.all
+      else
+        User.all.filter { |u| u.id == user_id.to_i }
+      end
     end
   end
 

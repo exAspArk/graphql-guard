@@ -79,6 +79,38 @@ RSpec.describe GraphQL::Guard do
       expect(result.to_h).to eq({"data" => {"postsWithMask" => [{"id" => "1"}]}})
     end
 
+    it 'allows to use an argument' do
+      user = User.new(id: '1', role: 'admin')
+      query = "query($userId: ID!) { usersWithArgumentMask(userId: $userId) { id } }"
+
+      result = Inline::Schema.execute(query, variables: {userId: user.id}, context: {current_user: user})
+
+      expect(result.to_h).to eq({"data" => {"usersWithArgumentMask" => [{"id" => "1"}]}})
+    end
+
+    it 'allows to query a field with a hidden argument' do
+      user = User.new(id: '1', role: 'not_admin')
+      query = "query { usersWithArgumentMask { id } }"
+
+      result = Inline::Schema.execute(query, variables: {}, context: {current_user: user})
+
+      expect(result.to_h).to eq({"data" => {"usersWithArgumentMask" => [{"id" => "1"}, {"id" => "2"}]}})
+    end
+
+    it 'hides an argument' do
+      user = User.new(id: '1', role: 'not_admin')
+      query = "query($userId: ID!) { usersWithArgumentMask(userId: $userId) { id } }"
+
+      result = Inline::Schema.execute(query, variables: {userId: user.id}, context: {current_user: user})
+
+      expect(result['errors']).to include({
+        "message" => "Field 'usersWithArgumentMask' doesn't accept argument 'userId'",
+        "locations" => [{"column"=>45, "line"=>1}],
+        "path" => ["query", "usersWithArgumentMask", "userId"],
+        "extensions" =>  {"argumentName"=>"userId", "code"=>"argumentNotAccepted", "name"=>"usersWithArgumentMask", "typeName"=>"Field"}
+      })
+    end
+
     it 'hides a field' do
       user = User.new(id: '1', role: 'not_admin')
       query = "query($userId: ID!) { postsWithMask(userId: $userId) { id } }"
