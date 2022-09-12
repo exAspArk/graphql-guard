@@ -26,12 +26,7 @@ module GraphQL
     end
 
     def use(schema_definition)
-      if schema_definition.interpreter?
-        schema_definition.tracer(self)
-      else
-        raise "Please use the graphql gem version >= 1.10 with GraphQL::Execution::Interpreter"
-      end
-
+      schema_definition.tracer(self)
       add_schema_masking!(schema_definition)
     end
 

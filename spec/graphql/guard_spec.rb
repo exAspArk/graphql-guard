@@ -140,14 +140,4 @@ RSpec.describe GraphQL::Guard do
       }.to raise_error(GraphQL::Guard::NotAuthorizedError, 'Not authorized to access: Mutation.createPost')
     end
   end
-
-  context 'schema without interpreter' do
-    it 'raises an exception' do
-      query = "query { userIds }"
-
-      expect {
-        require 'fixtures/without_interpreter_schema'
-      }.to raise_error('Please use the graphql gem version >= 1.10 with GraphQL::Execution::Interpreter')
-    end
-  end
 end
