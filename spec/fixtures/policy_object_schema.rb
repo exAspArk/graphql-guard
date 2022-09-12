@@ -1,8 +1,13 @@
 # frozen_string_literal: true
 
 module PolicyObject
-  class PostType < GraphQL::Schema::Object
+  module BaseInterface
+    include GraphQL::Schema::Interface
     field :id, ID, null: false
+  end
+
+  class PostType < GraphQL::Schema::Object
+    implements BaseInterface
     field :title, String, null: true
   end
 

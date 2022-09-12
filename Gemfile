@@ -1,6 +1,6 @@
 source "https://rubygems.org"
 
-gem "graphql", "~> 1.10"
+gem "graphql", "~> 1.13"
 
 gem "pry", require: false
 gem "coveralls", require: false
